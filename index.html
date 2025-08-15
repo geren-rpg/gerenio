@@ -227,14 +227,12 @@
         </div>
     </div>
 
-    <footer>Feito com ❤️ — popups simples, checkbox estilizada e drag visual.</footer>
+    <footer>Feito com a bunda</footer>
   </div>
 
   <script>
     const STORAGE_KEY = 'rpg_chars_v1'
     const defaultChars = [
-      {id:1,name:'Shizu',hp:143,maxHp:143,armor:117,maxArmor:117,mana:200,maxMana:200,regenPercent:20},
-      {id:2,name:'Teste',hp:1000,maxHp:1000,armor:500,maxArmor:500,mana:300,maxMana:300,regenPercent:40}
     ]
     const resistanceTypes = ['Congelamento', 'Choque', 'Sangramento', 'Chamas', 'Veneno', 'Atordoamento', 'Cegueira'];
 
@@ -312,13 +310,13 @@
         div.dataset.index = index
         div.innerHTML = `
           <h3 class="drag-handle">${escapeHtml(c.name)}</h3>
-          <div class="stat"><div class="meta">Vida ♥</div><div class="barwrap"><div class="bar" data-kind="hp" style="width:${pct(c.hp,c.maxHp)}%"></div></div><div class="nums">${c.hp} / ${c.maxHp}</div></div>
+          <div class="stat"><div class="meta">Vida ❤️</div><div class="barwrap"><div class="bar" data-kind="hp" style="width:${pct(c.hp,c.maxHp)}%"></div></div><div class="nums">${c.hp} / ${c.maxHp}</div></div>
           <div class="stat"><div class="meta">Armadura 🛡️</div><div class="barwrap"><div class="bar" data-kind="armor" style="width:${pct(c.armor,c.maxArmor)}%"></div></div><div class="nums">${c.armor} / ${c.maxArmor}</div></div>
           <div class="stat"><div class="meta">Mana ✨</div><div class="barwrap"><div class="bar" data-kind="mana" style="width:${pct(c.mana,c.maxMana)}%"></div></div><div class="nums">${c.mana} / ${c.maxMana}</div></div>
           <div class="muted" style="margin-top:6px">Regen: ${Number(c.regenPercent||0)}%</div>
           <div class="pills">
             <div class="pill" data-act="dano" data-id="${c.id}">Dano 🔥</div>
-            <div class="pill" data-act="vida" data-id="${c.id}">Vida ♥</div>
+            <div class="pill" data-act="vida" data-id="${c.id}">Vida ❤️</div>
             <div class="pill" data-act="armadura" data-id="${c.id}">Armadura 🛡️</div>
             <div class="pill" data-act="mana" data-id="${c.id}">Mana ✨</div>
             <div class="pill" data-act="regen" data-id="${c.id}">Regen Mana ⚡️</div>
