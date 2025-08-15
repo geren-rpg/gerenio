@@ -41,7 +41,35 @@
         background: var(--bg);
         color: var(--text);
         transition: background-color 0.3s ease, color 0.3s ease;
+        position: relative;
+        overflow-x: hidden;
     }
+
+    /* Dungeon Background Effect for Dark Mode */
+    body:not(.light-mode)::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(135deg, #0a0a23 0%, #200a23 100%);
+        z-index: -2;
+    }
+    body:not(.light-mode)::after {
+        content: '';
+        position: absolute;
+        width: 150vmax;
+        height: 150vmax;
+        left: 50%;
+        top: 50%;
+        background: radial-gradient(ellipse at center, rgba(100, 120, 255, 0.08) 0%, rgba(100, 120, 255, 0) 60%);
+        z-index: -1;
+        animation: moveGlow 20s linear infinite;
+    }
+    @keyframes moveGlow {
+        from { transform: translate(-50%, -50%) rotate(0deg); }
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+
     .app{max-width:1200px;margin:28px auto;padding:20px}
     header{display:flex;gap:12px;align-items:center}
     .search{flex:1;display:flex;gap:10px;align-items:center}
@@ -227,12 +255,14 @@
         </div>
     </div>
 
-    <footer>Feito com a bunda</footer>
+    <footer></footer>
   </div>
 
   <script>
     const STORAGE_KEY = 'rpg_chars_v1'
     const defaultChars = [
+      {id:1,name:'Shizu',hp:143,maxHp:143,armor:117,maxArmor:117,mana:200,maxMana:200,regenPercent:20},
+      {id:2,name:'Teste',hp:1000,maxHp:1000,armor:500,maxArmor:500,mana:300,maxMana:300,regenPercent:40}
     ]
     const resistanceTypes = ['Congelamento', 'Choque', 'Sangramento', 'Chamas', 'Veneno', 'Atordoamento', 'Cegueira'];
 
@@ -394,7 +424,6 @@
       if(ghostEl && ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl)
       document.querySelectorAll('.card.dragover').forEach(n=>n.classList.remove('dragover'))
       
-      // Apenas troca se o alvo for válido e diferente da origem
       if(targetId != null && targetId !== id){
         const i1 = chars.findIndex(c=>c.id===id)
         const i2 = chars.findIndex(c=>c.id===targetId)
@@ -491,9 +520,14 @@
         }
         if (c.hp < oldHp || c.armor < oldArmor) { tookDamage = true; }
       } else if(act === 'reset'){
-        if(c.initial){
-          Object.assign(c, c.initial);
-          c.resistances = createDefaultResistances();
+        if (c.initial) {
+            c.hp = c.initial.hp;
+            c.armor = c.initial.armor;
+            c.mana = c.initial.mana;
+            c.maxHp = c.initial.maxHp;
+            c.maxArmor = c.initial.maxArmor;
+            c.maxMana = c.initial.maxMana;
+            c.regenPercent = c.initial.regenPercent;
         }
       } else if(act === 'regen'){
         const amount = Number(x) || 0
@@ -610,7 +644,7 @@
 
     function openEdit(id){
       editingId = id
-      const c = chars.find(x=>x.id===id)
+      const c = chars.find(x => x.id===id)
       if(!c) return
       modalTitle.textContent = 'Editar ' + c.name
       mName.value = c.name
