@@ -84,12 +84,13 @@
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
     .controls{display:flex;gap:16px; align-items: center;}
-    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:none;padding:10px 14px;border-radius:999px;color:#fff;font-weight:700;cursor:pointer;transition:transform .12s, box-shadow .12s}
+    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:none;padding:10px 14px;border-radius:999px;color:#fff;font-weight:700;cursor:pointer;transition:transform .12s, box-shadow .12s, opacity 0.2s}
     button.primary:active{transform:scale(.98)}
-    button.ghost{background:transparent;border:1px solid var(--border-color);padding:10px 14px;border-radius:999px;color:var(--text);cursor:pointer; transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;}
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.ghost{background:transparent;border:1px solid var(--border-color);padding:10px 14px;border-radius:999px;color:var(--text);cursor:pointer; transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, opacity 0.2s;}
 
     main{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
-    .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,12,0.6);position:relative;transition:transform .18s,box-shadow .18s, background-color 0.3s ease}
+    .card{background:var(--card);padding:15px;border-radius:12px;box-shadow:0 6px 18px rgb(0, 0, 0);position:relative;transition:transform .18s,box-shadow .18s, background-color 0.3s ease}
     body.light-mode .card { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .card.dragging{opacity:0.95;transform:scale(1.04) rotate(-1.5deg);box-shadow:0 20px 40px rgba(2,6,12,0.7)}
     .card.dragover{outline:2px dashed rgba(78, 160, 255, 0.28);}
@@ -97,8 +98,8 @@
     @keyframes pop{0%{transform:translateY(6px) scale(0.99)}50%{transform:translateY(-6px) scale(1.02)}100%{transform:translateY(0) scale(1)}}
 
     .card.damaged {
-      animation: shake 0.4s ease-in-out;
-      box-shadow: inset 0 0 0 2px var(--danger), 0 0 15px rgba(255, 107, 107, 0.4);
+      animation: shake 0.1s ease-in-out;
+      box-shadow: inset 0 0 0 0.4px var(--danger), 0 0 15px rgba(255, 0, 0, 0.555);
     }
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
@@ -108,10 +109,10 @@
       80% { transform: translateX(5px) rotate(1deg); }
     }
 
-    .card .icon-btn{position:absolute;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--pill);cursor:pointer;border:1px solid var(--border-color);transition:transform .12s, background-color 0.3s ease}
+    .card .icon-btn{position:absolute;width:33px;height:33px;border-radius:40%;display:flex;align-items:center;justify-content:center;background:var(--pill);cursor:pointer;border:1.3px solid var(--border-color);transition:transform .12s, background-color 0.5s ease}
     .card .icon-btn:hover{transform:translateY(-4px)}
-    .card .edit{right:14px;bottom:12px;}
-    .card .resistance-btn{right:14px;bottom:56px;}
+    .card .edit{right:64px;bottom:165px;}
+    .card .resistance-btn{right:22px;bottom:165px;}
     h3{margin:0 0 12px 0}
 
     .stat{display:flex;align-items:center;gap:12px;margin:8px 0}
@@ -123,10 +124,20 @@
     .bar[data-kind="mana"] { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
     .nums{min-width:72px;text-align:right;color:var(--muted);font-size:13px; transition: color 0.3s ease;}
 
-    .pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-    .pill{background:var(--pill);padding:10px 14px;border-radius:12px;border:1px solid var(--border-color);cursor:pointer;min-width:104px;text-align:center;transition:transform .2s ease-out, box-shadow .2s ease-out, background-color .2s ease-out, border-color 0.3s ease}
+    .card-footer { display: flex; align-items: flex-end; gap: 8px; margin-top: 14px; }
+    .pills{display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; flex-grow: 1;}
+    .pill{
+        background:var(--pill);
+        padding: 10px 14px;
+        border-radius:12px;
+        border:1px solid var(--border-color);
+        cursor:pointer;
+        text-align:center;
+        transition:transform .2s ease-out, box-shadow .2s ease-out, background-color .2s ease-out, border-color 0.3s ease;
+    }
     .pill:hover{transform:translateY(-3px);box-shadow:0 8px 16px rgba(2,6,12,0.5);background:linear-gradient(90deg, rgba(73, 166, 255, 0.5), rgba(46, 160, 255, 0.5))}
     .pill:active{transform:scale(.98)}
+    .card-actions { display: flex; flex-direction: column; gap: 8px; }
 
     .switch-container { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
     .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
@@ -143,6 +154,7 @@
     .modal .panel{background:var(--bg);padding:14px;border-radius:12px;width:420px;box-shadow:0 10px 40px rgba(2,6,12,0.6);transform:translateY(12px);transition:transform .22s, background-color 0.3s ease}
     .modal.show .panel{transform:translateY(0)}
     .modal label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
+    .modal .label-group { display: flex; align-items: center; justify-content: space-between; }
     .modal input, .modal select{width:100%;padding:10px;border-radius:8px;background:var(--pill);border:1px solid var(--border-color);color:var(--text);margin-top:6px; transition: all 0.3s ease;}
     .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
     .btn-danger{background:var(--danger);color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
@@ -168,6 +180,8 @@
       <div class="search">
         <input id="search" type="search" placeholder="Buscar personagem..." />
         <div class="controls">
+          <button id="undoBtn" class="ghost">Desfazer</button>
+          <button id="redoBtn" class="ghost">Refazer</button>
           <button id="createBtn" class="primary">Criar</button>
           <div class="theme-switcher">
             <label class="switch">
@@ -254,7 +268,7 @@
             </div>
         </div>
     </div>
-
+    
     <footer></footer>
   </div>
 
@@ -294,6 +308,8 @@
     const searchEl = document.getElementById('search')
     const createBtn = document.getElementById('createBtn')
     const themeSwitch = document.getElementById('themeSwitch');
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
 
     const modal = document.getElementById('modal')
     const mName = document.getElementById('mName')
@@ -326,6 +342,9 @@
     const cancelResAction = document.getElementById('cancelResAction');
 
     let dragState = null 
+    let history = [];
+    let historyIndex = -1;
+    const HISTORY_LIMIT = 6; // 1 initial state + 5 undoable actions
 
     function render(){
       const q = (searchEl.value||'').trim().toLowerCase()
@@ -344,16 +363,20 @@
           <div class="stat"><div class="meta">Armadura 🛡️</div><div class="barwrap"><div class="bar" data-kind="armor" style="width:${pct(c.armor,c.maxArmor)}%"></div></div><div class="nums">${c.armor} / ${c.maxArmor}</div></div>
           <div class="stat"><div class="meta">Mana ✨</div><div class="barwrap"><div class="bar" data-kind="mana" style="width:${pct(c.mana,c.maxMana)}%"></div></div><div class="nums">${c.mana} / ${c.maxMana}</div></div>
           <div class="muted" style="margin-top:6px">Regen: ${Number(c.regenPercent||0)}%</div>
-          <div class="pills">
-            <div class="pill" data-act="dano" data-id="${c.id}">Dano 🔥</div>
-            <div class="pill" data-act="vida" data-id="${c.id}">Vida ❤️</div>
-            <div class="pill" data-act="armadura" data-id="${c.id}">Armadura 🛡️</div>
-            <div class="pill" data-act="mana" data-id="${c.id}">Mana ✨</div>
-            <div class="pill" data-act="regen" data-id="${c.id}">Regen Mana ⚡️</div>
-            <div class="pill" data-act="reset" data-id="${c.id}">Reset ♻️</div>
+          <div class="card-footer">
+            <div class="pills">
+              <div class="pill" data-act="dano" data-id="${c.id}">Dano 🔥</div>
+              <div class="pill" data-act="vida" data-id="${c.id}">Vida ❤️</div>
+              <div class="pill" data-act="armadura" data-id="${c.id}">Armadura 🛡️</div>
+              <div class="pill" data-act="mana" data-id="${c.id}">Mana ✨</div>
+              <div class="pill" data-act="regen" data-id="${c.id}">Regen Mana ⚡️</div>
+              <div class="pill" data-act="reset" data-id="${c.id}">Reset ♻️</div>
+            </div>
+            <div class="card-actions">
+                <div class="icon-btn resistance-btn" data-id="${c.id}" title="Resistências">💊</div>
+                <div class="icon-btn edit" data-id="${c.id}" title="Editar">✏️</div>
+            </div>
           </div>
-          <div class="icon-btn resistance-btn" data-id="${c.id}" title="Resistências">💊</div>
-          <div class="icon-btn edit" data-id="${c.id}" title="Editar">✏️</div>
         `
         cardsEl.appendChild(div)
         const handle = div.querySelector('.drag-handle')
@@ -362,17 +385,19 @@
       })
 
       document.querySelectorAll('.pill').forEach(el => {
-        el.onclick = e => {
-            const id = +e.currentTarget.dataset.id;
-            const act = e.currentTarget.dataset.act;
-            if (act === 'regen') {
-                const c = chars.find(x => x.id === id);
-                if (!c) return;
-                const pct = Number(c.regenPercent || 0);
-                const amount = Math.round((c.maxMana || 0) * pct / 100);
-                applyAction(id, 'regen', amount, { allow: false });
-            } else {
-                openAction(id, act);
+        const act = el.dataset.act;
+        const id = +el.dataset.id;
+        if (act) {
+             el.onclick = e => {
+                if (act === 'regen') {
+                    const c = chars.find(x => x.id === id);
+                    if (!c) return;
+                    const pct = Number(c.regenPercent || 0);
+                    const amount = Math.round((c.maxMana || 0) * pct / 100);
+                    applyAction(id, 'regen', amount, { allow: false });
+                } else {
+                    openAction(id, act);
+                }
             }
         }
       });
@@ -429,7 +454,8 @@
         const i2 = chars.findIndex(c=>c.id===targetId)
         if(i1>-1 && i2>-1){
           [chars[i1], chars[i2]] = [chars[i2], chars[i1]]
-          save(); render();
+          commitChange(); 
+          render();
           animateMovedCard(id); animateMovedCard(targetId)
         }
       }
@@ -542,7 +568,8 @@
         else if(op === 'dec'){ c[kind] = Math.max(0, c[kind] - x) }
       }
       ['hp','armor','mana','maxHp','maxArmor','maxMana','regenPercent'].forEach(k=>{ if(typeof c[k] !== 'number' || isNaN(c[k])) c[k]=0 })
-      save(); render(); 
+      commitChange(); 
+      render(); 
       if (tookDamage) { animateDamage(id); } else { animateMovedCard(id); }
     }
     
@@ -588,11 +615,11 @@
             res.current = Math.max(0, res.current - value);
         }
         
-        if (oldValue < 100 && res.current >= 100) {
+        if (oldValue < res.max && res.current >= res.max) {
             showToast(`${c.name} atingiu o máximo de resistência a ${type}!`);
         }
 
-        save();
+        commitChange();
         render();
         openResistanceModal(id);
         resistanceActionModal.classList.remove('show');
@@ -644,7 +671,7 @@
 
     function openEdit(id){
       editingId = id
-      const c = chars.find(x => x.id===id)
+      const c = chars.find(x=>x.id===id)
       if(!c) return
       modalTitle.textContent = 'Editar ' + c.name
       mName.value = c.name
@@ -689,17 +716,28 @@
       } else {
         const c = chars.find(x=>x.id===editingId)
         if(!c) return
-        c.name = mName.value || c.name
-        c.maxHp = Number(mMaxHp.value) || c.maxHp
-        c.maxArmor = Number(mMaxArmor.value) || c.maxArmor
-        c.maxMana = Number(mMaxMana.value) || c.maxMana
-        c.regenPercent = Number(mRegenPercent.value) || c.regenPercent || 0
-        c.hp = Math.min(c.hp, c.maxHp)
-        c.armor = Math.min(c.armor, c.maxArmor)
-        c.mana = Math.min(c.mana, c.maxMana)
+        c.name = mName.value || c.name;
+        c.maxHp = Number(mMaxHp.value) || c.maxHp;
+        c.maxArmor = Number(mMaxArmor.value) || c.maxArmor;
+        c.maxMana = Number(mMaxMana.value) || c.maxMana;
+        c.regenPercent = Number(mRegenPercent.value) || c.regenPercent || 0;
         c.resistances = resistances;
+
+        // Atualiza o estado inicial para refletir a edição
+        c.initial = {
+            hp: c.maxHp, armor: c.maxArmor, mana: c.maxMana,
+            maxHp: c.maxHp, maxArmor: c.maxArmor, maxMana: c.maxMana,
+            regenPercent: c.regenPercent,
+            resistances: resistances
+        };
+
+        c.hp = Math.min(c.hp, c.maxHp);
+        c.armor = Math.min(c.armor, c.maxArmor);
+        c.mana = Math.min(c.mana, c.maxMana);
       }
-      save(); render(); closeModal()
+      commitChange();
+      render(); 
+      closeModal()
     }
 
     deleteBtn.onclick = ()=>{
@@ -708,7 +746,9 @@
       if(!c) return
       if(confirm('Excluir ' + c.name + '? Isso é permanente.')){
         chars = chars.filter(x=>x.id!==editingId)
-        save(); render(); closeModal()
+        commitChange();
+        render(); 
+        closeModal()
       }
     }
     
@@ -729,11 +769,53 @@
         });
     }
 
+    function updateUndoRedoButtons() {
+        undoBtn.disabled = historyIndex <= 0;
+        redoBtn.disabled = historyIndex >= history.length - 1;
+    }
+
+    function commitChange() {
+        if (historyIndex < history.length - 1) {
+            history.splice(historyIndex + 1);
+        }
+        history.push(JSON.parse(JSON.stringify(chars)));
+        if (history.length > HISTORY_LIMIT) {
+            history.shift();
+        }
+        historyIndex = history.length - 1;
+        save();
+        updateUndoRedoButtons();
+    }
+
+    function undo() {
+        if (historyIndex > 0) {
+            historyIndex--;
+            chars = JSON.parse(JSON.stringify(history[historyIndex]));
+            save();
+            render();
+            updateUndoRedoButtons();
+        }
+    }
+
+    function redo() {
+        if (historyIndex < history.length - 1) {
+            historyIndex++;
+            chars = JSON.parse(JSON.stringify(history[historyIndex]));
+            save();
+            render();
+            updateUndoRedoButtons();
+        }
+    }
+
+    undoBtn.onclick = undo;
+    redoBtn.onclick = redo;
+
     searchEl.oninput = ()=>render()
     window.addEventListener('keydown', e=>{ if(e.key === 'Insert'){ createBtn.click() } })
 
     setupTheme();
-    render()
+    commitChange(); // Save the initial state
+    render();
   </script>
 </body>
 </html>
