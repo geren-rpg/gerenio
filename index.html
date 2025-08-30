@@ -688,20 +688,31 @@
 
     cancelModal.onclick = ()=>{ closeModal() }
 
+    // --- CORREÇÃO AQUI: manter os 'current' das resistências ao editar ---
     saveModal.onclick = ()=>{
-      const resistances = createDefaultResistances();
-      mResistances.querySelectorAll('input').forEach(input => {
+      // lê os máximos das inputs (mas não zera os current existentes)
+      const resistanceInputs = mResistances.querySelectorAll('input');
+      const newMaxRes = {};
+      resistanceInputs.forEach(input => {
           const type = input.dataset.resType;
-          resistances[type].max = Number(input.value) || 100;
+          newMaxRes[type] = Number(input.value) || 100;
       });
 
       if(editingId==null){
+        // comportamento de criação (igual ao original): cria resistências com current = 0
+        const resistances = createDefaultResistances();
+        mResistances.querySelectorAll('input').forEach(input => {
+            const type = input.dataset.resType;
+            resistances[type].max = Number(input.value) || 100;
+        });
+
         const id = Date.now()
         const name = mName.value || 'Sem nome'
         const maxHp = Number(mMaxHp.value) || 0
         const maxArmor = Number(mMaxArmor.value) || 0
         const maxMana = Number(mMaxMana.value) || 0
         const regen = Number(mRegenPercent.value) || 0
+
         const newChar = {
             id, name, hp:maxHp, maxHp, armor:maxArmor, maxArmor, mana:maxMana, maxMana, 
             regenPercent: regen, 
@@ -709,31 +720,46 @@
             initial: {
                 hp:maxHp, armor:maxArmor, mana:maxMana, maxHp, maxArmor, maxMana, 
                 regenPercent: regen,
-                resistances: resistances
+                resistances: JSON.parse(JSON.stringify(resistances))
             }
         }
         chars.push(newChar)
       } else {
+        // editar sem resetar acúmulos: atualiza somente os máximos e mantém current
         const c = chars.find(x=>x.id===editingId)
         if(!c) return
+
+        // garante estrutura de resistências existente
+        if(!c.resistances) c.resistances = createDefaultResistances();
+
+        // atualiza só os max (mantendo current) e clamp caso current > novo max
+        resistanceTypes.forEach(type => {
+          const newMax = newMaxRes[type] || 100;
+          if(!c.resistances[type]) c.resistances[type] = { current: 0, max: newMax };
+          else c.resistances[type].max = newMax;
+          c.resistances[type].current = Math.min(c.resistances[type].current || 0, c.resistances[type].max);
+        });
+
+        // atualiza demais campos
         c.name = mName.value || c.name;
         c.maxHp = Number(mMaxHp.value) || c.maxHp;
         c.maxArmor = Number(mMaxArmor.value) || c.maxArmor;
         c.maxMana = Number(mMaxMana.value) || c.maxMana;
         c.regenPercent = Number(mRegenPercent.value) || c.regenPercent || 0;
-        c.resistances = resistances;
 
-        // Atualiza o estado inicial para refletir a edição
+        // ajusta hp/armor/mana só pra não ultrapassar os novos máximos (sem resetar para max)
+        c.hp = Math.min(c.hp, c.maxHp);
+        c.armor = Math.min(c.armor, c.maxArmor);
+        c.mana = Math.min(c.mana, c.maxMana);
+
+        // atualiza o estado inicial para refletir os novos máximos,
+        // mas preservando os current das resistências (para não perder acúmulos)
         c.initial = {
             hp: c.maxHp, armor: c.maxArmor, mana: c.maxMana,
             maxHp: c.maxHp, maxArmor: c.maxArmor, maxMana: c.maxMana,
             regenPercent: c.regenPercent,
-            resistances: resistances
+            resistances: JSON.parse(JSON.stringify(c.resistances))
         };
-
-        c.hp = Math.min(c.hp, c.maxHp);
-        c.armor = Math.min(c.armor, c.maxArmor);
-        c.mana = Math.min(c.mana, c.maxMana);
       }
       commitChange();
       render(); 
