@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf--8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gerenciador de Personagens (Web)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      /* Dark Theme (Default) */
+      --bg: #0f1720;
+      --card: #1e293b;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --pill: #334155;
+      --accent: #38bdf8;
+      --accent-2: #0ea5e9;
+      --good: #4ade80;
+      --danger: #f87171;
+      --border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    body.light-mode {
+      /* Light Theme */
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --muted: #64748b;
+      --text: #0f172a;
+      --pill: #e2e8f0;
+      --accent: #0ea5e9;
+      --accent-2: #0284c7;
+      --good: #22c55e;
+      --danger: #ef4444;
+      --border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    *{box-sizing:border-box;font-family:Inter,system-ui,Arial,Helvetica,sans-serif}
+    html,body{
+        height:100%;
+        margin:0;
+        background: var(--bg);
+        color: var(--text);
+        transition: background-color 0.3s ease, color 0.3s ease;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* Dungeon Background Effect for Dark Mode */
+    body:not(.light-mode)::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(135deg, #0a0a23 0%, #200a23 100%);
+        z-index: -2;
+    }
+    body:not(.light-mode)::after {
+        content: '';
+        position: absolute;
+        width: 150vmax;
+        height: 150vmax;
+        left: 50%;
+        top: 50%;
+        background: radial-gradient(ellipse at center, rgba(100, 120, 255, 0.08) 0%, rgba(100, 120, 255, 0) 60%);
+        z-index: -1;
+        animation: moveGlow 20s linear infinite;
+    }
+    @keyframes moveGlow {
+        from { transform: translate(-50%, -50%) rotate(0deg); }
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+
+    .app{max-width:1200px;margin:28px auto;padding:20px}
+    header{display:flex;gap:12px;align-items:center}
+    .search{flex:1;display:flex;gap:10px;align-items:center}
+    input[type=search]{
+        width:100%;
+        padding:14px 18px;
+        border-radius:10px;
+        background: var(--card);
+        border:1px solid var(--border-color);
+        color: var(--text);
+        outline:none;
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+    .controls{display:flex;gap:16px; align-items: center;}
+    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:none;padding:10px 14px;border-radius:999px;color:#fff;font-weight:700;cursor:pointer;transition:transform .12s, box-shadow .12s, opacity 0.2s}
+    button.primary:active{transform:scale(.98)}
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.ghost{background:transparent;border:1px solid var(--border-color);padding:10px 14px;border-radius:999px;color:var(--text);cursor:pointer; transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, opacity 0.2s;}
+
+    main{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+    .card{background:var(--card);padding:15px;border-radius:12px;box-shadow:0 6px 18px rgb(0, 0, 0);position:relative;transition:transform .18s,box-shadow .18s, background-color 0.3s ease}
+    body.light-mode .card { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .card.dragging{opacity:0.95;transform:scale(1.04) rotate(-1.5deg);box-shadow:0 20px 40px rgba(2,6,12,0.7)}
+    .card.dragover{outline:2px dashed rgba(78, 160, 255, 0.28);}
+    .card.moved{animation:pop .36s ease}
+    @keyframes pop{0%{transform:translateY(6px) scale(0.99)}50%{transform:translateY(-6px) scale(1.02)}100%{transform:translateY(0) scale(1)}}
+
+    .card.damaged {
+      animation: shake 0.1s ease-in-out;
+      box-shadow: inset 0 0 0 0.4px var(--danger), 0 0 15px rgba(255, 0, 0, 0.555);
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-5px) rotate(-1deg); }
+      40% { transform: translateX(5px) rotate(1deg); }
+      60% { transform: translateX(-5px) rotate(-1deg); }
+      80% { transform: translateX(5px) rotate(1deg); }
+    }
+
+    .card .icon-btn{position:absolute;width:33px;height:33px;border-radius:40%;display:flex;align-items:center;justify-content:center;background:var(--pill);cursor:pointer;border:1.3px solid var(--border-color);transition:transform .12s, background-color 0.5s ease}
+    .card .icon-btn:hover{transform:translateY(-4px)}
+    .card .edit{right:64px;bottom:165px;}
+    .card .resistance-btn{right:22px;bottom:165px;}
+    h3{margin:0 0 12px 0}
+
+    .stat{display:flex;align-items:center;gap:12px;margin:8px 0}
+    .stat .meta{min-width:110px}
+    .barwrap{flex:1;background:rgba(120,120,120,0.1);height:12px;border-radius:999px;overflow:hidden;position:relative}
+    .bar{height:100%;width:0%;transition:width .4s cubic-bezier(.22,.9,.32,1)}
+    .bar[data-kind="hp"] { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .bar[data-kind="armor"] { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .bar[data-kind="mana"] { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .nums{min-width:72px;text-align:right;color:var(--muted);font-size:13px; transition: color 0.3s ease;}
+
+    .card-footer { display: flex; align-items: flex-end; gap: 8px; margin-top: 14px; }
+    .pills{display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; flex-grow: 1;}
+    .pill{
+        background:var(--pill);
+        padding: 10px 14px;
+        border-radius:12px;
+        border:1px solid var(--border-color);
+        cursor:pointer;
+        text-align:center;
+        transition:transform .2s ease-out, box-shadow .2s ease-out, background-color .2s ease-out, border-color 0.3s ease;
+    }
+    .pill:hover{transform:translateY(-3px);box-shadow:0 8px 16px rgba(2,6,12,0.5);background:linear-gradient(90deg, rgba(73, 166, 255, 0.5), rgba(46, 160, 255, 0.5))}
+    .pill:active{transform:scale(.98)}
+    .card-actions { display: flex; flex-direction: column; gap: 8px; }
+
+    .switch-container { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--pill); transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background: linear-gradient(90deg,var(--accent),var(--accent-2)); }
+    input:checked + .slider:before { transform: translateX(20px); }
+    body.light-mode .slider:before { background-color: #e2e8f0; }
+    body.light-mode input:checked + .slider:before { background-color: #fff; }
+
+    .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15, 23, 42, 0.7);backdrop-filter: blur(4px);z-index:60;opacity:0;pointer-events:none;transition:opacity .18s}
+    .modal.show{opacity:1;pointer-events:auto}
+    .modal .panel{background:var(--bg);padding:14px;border-radius:12px;width:420px;box-shadow:0 10px 40px rgba(2,6,12,0.6);transform:translateY(12px);transition:transform .22s, background-color 0.3s ease}
+    .modal.show .panel{transform:translateY(0)}
+    .modal label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
+    .modal .label-group { display: flex; align-items: center; justify-content: space-between; }
+    .modal input, .modal select{width:100%;padding:10px;border-radius:8px;background:var(--pill);border:1px solid var(--border-color);color:var(--text);margin-top:6px; transition: all 0.3s ease;}
+    .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    .btn-danger{background:var(--danger);color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+    .modal .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    #resistanceModal .list { display: flex; flex-direction: column; gap: 8px; max-height: 40vh; overflow-y: auto; padding-right: 8px; }
+    #resistanceModal .item { display: flex; justify-content: space-between; align-items: center; background: var(--pill); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease;}
+    #resistanceModal .item:hover { background: rgba(120,120,120,0.1); }
+
+    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: linear-gradient(90deg, var(--accent), var(--accent-2)); color: #fff; padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-weight: 600; animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+    @media (max-width:640px){.app{padding:12px} .search{flex-direction:column;align-items:stretch} .modal .panel{width:92%}}
+  </style>
+</head>
+<body>
+  <div id="toast-container"></div>
+  <div class="app">
+    <header>
+      <div class="search">
+        <input id="search" type="search" placeholder="Buscar personagem..." />
+        <div class="controls">
+          <button id="undoBtn" class="ghost">Desfazer</button>
+          <button id="redoBtn" class="ghost">Refazer</button>
+          <button id="createBtn" class="primary">Criar</button>
+          <div class="theme-switcher">
+            <label class="switch">
+                <input id="themeSwitch" type="checkbox">
+                <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="cards" aria-label="Lista de personagens"></main>
+
+    <div id="modal" class="modal">
+      <div class="panel">
+        <h3 id="modalTitle">Editar personagem</h3>
+        <label>Nome</label>
+        <input id="mName" />
+        <div class="controls-row" style="display:flex; gap: 8px;">
+          <div style="flex:1">
+            <label>Vida máxima</label>
+            <input id="mMaxHp" type="number" />
+          </div>
+          <div style="width:120px">
+            <label>Regen %</label>
+            <input id="mRegenPercent" type="number" min="0" max="100" />
+          </div>
+        </div>
+        <div class="controls-row" style="display:flex; gap: 8px;">
+          <div style="flex:1">
+            <label>Armadura máxima</label>
+            <input id="mMaxArmor" type="number" />
+          </div>
+          <div style="flex:1">
+            <label>Mana máxima</label>
+            <input id="mMaxMana" type="number" />
+          </div>
+        </div>
+        
+        <h4 style="margin-top: 16px; margin-bottom: 8px; display:flex; align-items:center; gap: 8px;"><span>💊</span> Resistências</h4>
+        <div id="mResistances" class="res-grid"></div>
+
+        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+          <button id="deleteBtn" class="btn-danger" style="margin-right:auto;display:none">Excluir</button>
+          <button id="cancelModal" class="ghost">Cancelar</button>
+          <button id="saveModal" class="primary">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="actionModal" class="modal">
+      <div class="panel">
+        <h3 id="actionTitle">Ação</h3>
+        <div id="actionBody"></div>
+        <div class="actions">
+          <button id="cancelAction" class="ghost">Cancelar</button>
+          <button id="confirmAction" class="primary">Confirmar</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="resistanceModal" class="modal">
+      <div class="panel">
+        <h3 id="resistanceModalTitle">Resistências</h3>
+        <div id="resistanceModalBody" class="list"></div>
+        <div class="actions">
+          <button id="closeResistanceModal" class="ghost">Fechar</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="resistanceActionModal" class="modal">
+        <div class="panel">
+            <h3 id="resistanceActionTitle">Gerenciar Acúmulo</h3>
+            <label>Valor</label>
+            <input id="resAmount" type="number" value="10" />
+            <div class="actions" style="margin-top: 16px;">
+                <button id="resSet" class="ghost">Setar</button>
+                <button id="resAdd" class="primary">Adicionar</button>
+                <button id="resRemove" class="btn-danger">Remover</button>
+            </div>
+             <div class="actions" style="margin-top: 8px;">
+                <button id="cancelResAction" class="ghost" style="width:100%">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer></footer>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'rpg_chars_v1'
+    const defaultChars = [
+      {id:1,name:'Shizu',hp:143,maxHp:143,armor:117,maxArmor:117,mana:200,maxMana:200,regenPercent:20},
+      {id:2,name:'Teste',hp:1000,maxHp:1000,armor:500,maxArmor:500,mana:300,maxMana:300,regenPercent:40}
+    ]
+    const resistanceTypes = ['Congelamento', 'Choque', 'Sangramento', 'Chamas', 'Veneno', 'Atordoamento', 'Cegueira'];
+
+    function createDefaultResistances() {
+        const resistances = {};
+        resistanceTypes.forEach(type => {
+            resistances[type] = { current: 0, max: 100 };
+        });
+        return resistances;
+    }
+
+    let chars = load() || defaultChars.slice()
+    chars.forEach(c=>{ 
+        if(!c.initial) c.initial = {
+            hp:c.hp, armor:c.armor, mana:c.mana,
+            maxHp:c.maxHp, maxArmor:c.maxArmor, maxMana:c.maxMana, 
+            regenPercent:c.regenPercent||0,
+            resistances: c.resistances || createDefaultResistances()
+        }
+        if (!c.resistances) {
+            c.resistances = createDefaultResistances();
+        }
+    })
+
+    let editingId = null
+    let activeResistanceContext = { id: null, type: null };
+
+    const cardsEl = document.getElementById('cards')
+    const searchEl = document.getElementById('search')
+    const createBtn = document.getElementById('createBtn')
+    const themeSwitch = document.getElementById('themeSwitch');
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+
+    const modal = document.getElementById('modal')
+    const mName = document.getElementById('mName')
+    const mMaxHp = document.getElementById('mMaxHp')
+    const mMaxArmor = document.getElementById('mMaxArmor')
+    const mMaxMana = document.getElementById('mMaxMana')
+    const mRegenPercent = document.getElementById('mRegenPercent')
+    const mResistances = document.getElementById('mResistances');
+    const saveModal = document.getElementById('saveModal')
+    const cancelModal = document.getElementById('cancelModal')
+    const modalTitle = document.getElementById('modalTitle')
+    const deleteBtn = document.getElementById('deleteBtn')
+
+    const actionModal = document.getElementById('actionModal')
+    const actionTitle = document.getElementById('actionTitle')
+    const actionBody = document.getElementById('actionBody')
+    const cancelAction = document.getElementById('cancelAction')
+    const confirmAction = document.getElementById('confirmAction')
+    
+    const resistanceModal = document.getElementById('resistanceModal');
+    const resistanceModalTitle = document.getElementById('resistanceModalTitle');
+    const resistanceModalBody = document.getElementById('resistanceModalBody');
+    const closeResistanceModal = document.getElementById('closeResistanceModal');
+    const resistanceActionModal = document.getElementById('resistanceActionModal');
+    const resistanceActionTitle = document.getElementById('resistanceActionTitle');
+    const resAmount = document.getElementById('resAmount');
+    const resSet = document.getElementById('resSet');
+    const resAdd = document.getElementById('resAdd');
+    const resRemove = document.getElementById('resRemove');
+    const cancelResAction = document.getElementById('cancelResAction');
+
+    let dragState = null 
+    let history = [];
+    let historyIndex = -1;
+    const HISTORY_LIMIT = 6; // 1 initial state + 5 undoable actions
+
+    function render(){
+      const q = (searchEl.value||'').trim().toLowerCase()
+      cardsEl.innerHTML = ''
+      const filtered = chars.filter(c => (c.name||'').toLowerCase().includes(q))
+      if(filtered.length===0){ cardsEl.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);padding:18px;background:var(--card);border-radius:10px">Nenhum personagem encontrado.</div>'; return }
+
+      filtered.forEach((c,index)=>{
+        const div = document.createElement('div')
+        div.className='card'
+        div.dataset.id = c.id
+        div.dataset.index = index
+        div.innerHTML = `
+          <h3 class="drag-handle">${escapeHtml(c.name)}</h3>
+          <div class="stat"><div class="meta">Vida ❤️</div><div class="barwrap"><div class="bar" data-kind="hp" style="width:${pct(c.hp,c.maxHp)}%"></div></div><div class="nums">${c.hp} / ${c.maxHp}</div></div>
+          <div class="stat"><div class="meta">Armadura 🛡️</div><div class="barwrap"><div class="bar" data-kind="armor" style="width:${pct(c.armor,c.maxArmor)}%"></div></div><div class="nums">${c.armor} / ${c.maxArmor}</div></div>
+          <div class="stat"><div class="meta">Mana ✨</div><div class="barwrap"><div class="bar" data-kind="mana" style="width:${pct(c.mana,c.maxMana)}%"></div></div><div class="nums">${c.mana} / ${c.maxMana}</div></div>
+          <div class="muted" style="margin-top:6px">Regen: ${Number(c.regenPercent||0)}%</div>
+          <div class="card-footer">
+            <div class="pills">
+              <div class="pill" data-act="dano" data-id="${c.id}">Dano 🔥</div>
+              <div class="pill" data-act="vida" data-id="${c.id}">Vida ❤️</div>
+              <div class="pill" data-act="armadura" data-id="${c.id}">Armadura 🛡️</div>
+              <div class="pill" data-act="mana" data-id="${c.id}">Mana ✨</div>
+              <div class="pill" data-act="regen" data-id="${c.id}">Regen Mana ⚡️</div>
+              <div class="pill" data-act="reset" data-id="${c.id}">Reset ♻️</div>
+            </div>
+            <div class="card-actions">
+                <div class="icon-btn resistance-btn" data-id="${c.id}" title="Resistências">💊</div>
+                <div class="icon-btn edit" data-id="${c.id}" title="Editar">✏️</div>
+            </div>
+          </div>
+        `
+        cardsEl.appendChild(div)
+        const handle = div.querySelector('.drag-handle')
+        handle.style.cursor = 'grab'
+        handle.addEventListener('pointerdown', onPointerDown)
+      })
+
+      document.querySelectorAll('.pill').forEach(el => {
+        const act = el.dataset.act;
+        const id = +el.dataset.id;
+        if (act) {
+             el.onclick = e => {
+                if (act === 'regen') {
+                    const c = chars.find(x => x.id === id);
+                    if (!c) return;
+                    const pct = Number(c.regenPercent || 0);
+                    const amount = Math.round((c.maxMana || 0) * pct / 100);
+                    applyAction(id, 'regen', amount, { allow: false });
+                } else {
+                    openAction(id, act);
+                }
+            }
+        }
+      });
+      document.querySelectorAll('.edit').forEach(el=>el.onclick = e=>openEdit(+e.currentTarget.dataset.id))
+      document.querySelectorAll('.resistance-btn').forEach(el=>el.onclick = e=>openResistanceModal(+e.currentTarget.dataset.id))
+    }
+
+    function onPointerDown(e){
+      if(e.button !== 0) return
+      const handle = e.currentTarget
+      const card = handle.closest('.card')
+      const id = Number(card.dataset.id)
+      card.setPointerCapture(e.pointerId)
+      dragState = {id, originEl:card, pointerId:e.pointerId, targetId:null}
+      const ghost = card.cloneNode(true)
+      ghost.classList.add('ghost-follow')
+      ghost.style.width = card.offsetWidth + 'px'
+      ghost.style.height = card.offsetHeight + 'px'
+      ghost.style.left = (e.clientX) + 'px'
+      ghost.style.top = (e.clientY) + 'px'
+      document.body.appendChild(ghost)
+      dragState.ghostEl = ghost
+      card.classList.add('dragging')
+      window.addEventListener('pointermove', onPointerMove)
+      window.addEventListener('pointerup', onPointerUp)
+      e.preventDefault()
+    }
+
+    function onPointerMove(e){
+      if(!dragState) return
+      const {ghostEl, originEl} = dragState
+      ghostEl.style.left = e.clientX + 'px'
+      ghostEl.style.top = e.clientY + 'px'
+      const el = document.elementFromPoint(e.clientX, e.clientY)
+      const card = el ? el.closest && el.closest('.card') : null
+      document.querySelectorAll('.card.dragover').forEach(n=>n.classList.remove('dragover'))
+      dragState.targetId = null
+      if(card && card !== originEl){
+        card.classList.add('dragover')
+        dragState.targetId = Number(card.dataset.id)
+      }
+    }
+
+    function onPointerUp(e){
+      if(!dragState) return
+      const {originEl, ghostEl, id, targetId, pointerId} = dragState
+      try{ originEl.releasePointerCapture(pointerId) }catch(_){}
+      originEl.classList.remove('dragging')
+      if(ghostEl && ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl)
+      document.querySelectorAll('.card.dragover').forEach(n=>n.classList.remove('dragover'))
+      
+      if(targetId != null && targetId !== id){
+        const i1 = chars.findIndex(c=>c.id===id)
+        const i2 = chars.findIndex(c=>c.id===targetId)
+        if(i1>-1 && i2>-1){
+          [chars[i1], chars[i2]] = [chars[i2], chars[i1]]
+          commitChange(); 
+          render();
+          animateMovedCard(id); animateMovedCard(targetId)
+        }
+      }
+
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('pointerup', onPointerUp)
+      dragState = null
+    }
+    
+    function animateDamage(id){
+      requestAnimationFrame(()=>{
+        const el = document.querySelector(`.card[data-id='${id}']`)
+        if(!el) return
+        el.classList.add('damaged')
+        setTimeout(()=>el.classList.remove('damaged'), 420)
+      })
+    }
+
+    function animateMovedCard(id){
+      requestAnimationFrame(()=>{
+        const el = document.querySelector(`.card[data-id='${id}']`)
+        if(!el) return
+        el.classList.add('moved')
+        setTimeout(()=>el.classList.remove('moved'), 420)
+      })
+    }
+
+    function pct(cur,max){ if(!max || max===0) return 0; return Math.max(0, Math.min(100, Math.round((cur/max)*100))) }
+    function escapeHtml(t){ if(!t) return ''; return String(t).replace(/[&<>"']/g, c=>'&#'+c.charCodeAt(0)+';') }
+
+    function openAction(id, act){
+      const c = chars.find(x=>x.id===id)
+      if(!c) return
+      actionModal.classList.add('show')
+      actionTitle.textContent = actLabel(act)
+      actionBody.innerHTML = ''
+      const placeholder = document.createElement('div')
+      placeholder.className = 'placeholder'
+      placeholder.innerHTML = `<div class="dot"></div><div>${escapeHtml(c.name)}</div>`
+      actionBody.appendChild(placeholder)
+      if(act === 'dano'){
+        actionBody.insertAdjacentHTML('beforeend', `<label style="margin-top:8px">Quantidade</label><input id="aAmount" type="number" value="10" />`)
+        const switchContainer = document.createElement('div');
+        switchContainer.className = 'switch-container';
+        switchContainer.innerHTML = `<label class="switch"><input id="aTrue" type="checkbox"><span class="slider"></span></label><span>Dano real</span>`;
+        actionBody.appendChild(switchContainer);
+        confirmAction.onclick = ()=>{
+          const x = Number(document.getElementById('aAmount').value) || 0
+          const danoReal = document.getElementById('aTrue').checked
+          applyAction(id,'dano',x,danoReal)
+          closeAction()
+        }
+      } else if(act === 'reset'){
+        actionBody.insertAdjacentHTML('beforeend', `<div style="margin-top:8px">Redefinir ${escapeHtml(c.name)} para valores iniciais</div>`)
+        confirmAction.onclick = ()=>{ applyAction(id,'reset'); closeAction() }
+      } else {
+        actionBody.insertAdjacentHTML('beforeend', `<label style="margin-top:8px">Operação</label><select id="aOp"><option value="set">Setar</option><option value="inc">Aumentar</option><option value="dec">Diminuir</option></select><label>Quantidade</label><input id="aAmount" type="number" value="10" />`)
+        const switchContainer = document.createElement('div');
+        switchContainer.className = 'switch-container';
+        switchContainer.innerHTML = `<label class="switch"><input id="aOverflow" type="checkbox"><span class="slider"></span></label><span>Permitir ultrapassar limite</span>`;
+        actionBody.appendChild(switchContainer);
+        confirmAction.onclick = ()=>{
+          const op = document.getElementById('aOp').value
+          const x = Number(document.getElementById('aAmount').value) || 0
+          const allow = document.getElementById('aOverflow').checked
+          applyAction(id, act, x, {op, allow})
+          closeAction()
+        }
+      }
+      cancelAction.onclick = closeAction
+    }
+
+    function closeAction(){ actionModal.classList.remove('show'); confirmAction.onclick = null; cancelAction.onclick = null }
+    function actLabel(a){ return a==='dano' ? 'Aplicar Dano' : a==='vida' ? 'Editar Vida' : a==='armadura' ? 'Editar Armadura' : a==='mana' ? 'Editar Mana' : a==='regen' ? 'Regenerar Mana' : 'Ação' }
+
+    function applyAction(id, act, x, opts){
+      const c = chars.find(i=>i.id===id); if(!c) return
+      let tookDamage = false;
+      if(act === 'dano'){
+        const danoReal = !!opts
+        const oldHp = c.hp; const oldArmor = c.armor;
+        if(danoReal){ c.hp = Math.max(0, c.hp - x) }
+        else {
+          const takeArmor = Math.min(c.armor, x)
+          c.armor = Math.max(0, c.armor - x)
+          const leftover = x - takeArmor
+          if(leftover>0) c.hp = Math.max(0, c.hp - leftover)
+        }
+        if (c.hp < oldHp || c.armor < oldArmor) { tookDamage = true; }
+      } else if(act === 'reset'){
+        if (c.initial) {
+            c.hp = c.initial.hp;
+            c.armor = c.initial.armor;
+            c.mana = c.initial.mana;
+            c.maxHp = c.initial.maxHp;
+            c.maxArmor = c.initial.maxArmor;
+            c.maxMana = c.initial.maxMana;
+            c.regenPercent = c.initial.regenPercent;
+        }
+      } else if(act === 'regen'){
+        const amount = Number(x) || 0
+        const allow = opts && opts.allow
+        c.mana = allow ? c.mana + amount : Math.min(c.maxMana, c.mana + amount)
+      } else {
+        const {op='inc', allow=false} = opts || {}
+        const kind = act === 'vida' ? 'hp' : act === 'armadura' ? 'armor' : 'mana'
+        const maxKey = act === 'vida' ? 'maxHp' : act === 'armadura' ? 'maxArmor' : 'maxMana'
+        if(op === 'set'){ c[kind] = allow ? x : Math.max(0, Math.min(c[maxKey], x)) } 
+        else if(op === 'inc'){ c[kind] = allow ? c[kind] + x : Math.min(c[maxKey], c[kind] + x) } 
+        else if(op === 'dec'){ c[kind] = Math.max(0, c[kind] - x) }
+      }
+      ['hp','armor','mana','maxHp','maxArmor','maxMana','regenPercent'].forEach(k=>{ if(typeof c[k] !== 'number' || isNaN(c[k])) c[k]=0 })
+      commitChange(); 
+      render(); 
+      if (tookDamage) { animateDamage(id); } else { animateMovedCard(id); }
+    }
+    
+    function openResistanceModal(id) {
+        const c = chars.find(x => x.id === id);
+        if (!c) return;
+        resistanceModalTitle.textContent = `Resistências de ${c.name}`;
+        resistanceModalBody.innerHTML = '';
+        resistanceTypes.forEach(type => {
+            const res = c.resistances[type];
+            const item = document.createElement('div');
+            item.className = 'item';
+            item.dataset.type = type;
+            item.innerHTML = `<span>${type}</span><span>${res.current} / ${res.max}</span>`;
+            item.onclick = () => openResistanceActionModal(id, type);
+            resistanceModalBody.appendChild(item);
+        });
+        resistanceModal.classList.add('show');
+    }
+    closeResistanceModal.onclick = () => resistanceModal.classList.remove('show');
+
+    function openResistanceActionModal(id, type) {
+        activeResistanceContext = { id, type };
+        resistanceActionTitle.textContent = `Gerenciar ${type}`;
+        resistanceActionModal.classList.add('show');
+    }
+    cancelResAction.onclick = () => resistanceActionModal.classList.remove('show');
+    
+    function applyResistanceAction(op) {
+        const { id, type } = activeResistanceContext;
+        const c = chars.find(x => x.id === id);
+        if (!c) return;
+
+        const value = Number(resAmount.value) || 0;
+        const res = c.resistances[type];
+        const oldValue = res.current;
+
+        if (op === 'set') {
+            res.current = Math.max(0, Math.min(res.max, value));
+        } else if (op === 'add') {
+            res.current = Math.min(res.max, res.current + value);
+        } else if (op === 'remove') {
+            res.current = Math.max(0, res.current - value);
+        }
+        
+        if (oldValue < res.max && res.current >= res.max) {
+            showToast(`${c.name} atingiu o máximo de resistência a ${type}!`);
+        }
+
+        commitChange();
+        render();
+        openResistanceModal(id);
+        resistanceActionModal.classList.remove('show');
+    }
+    
+    resSet.onclick = () => applyResistanceAction('set');
+    resAdd.onclick = () => applyResistanceAction('add');
+    resRemove.onclick = () => applyResistanceAction('remove');
+
+    function showToast(message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
+    function save(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(chars)) }
+    function load(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') }catch(e){return null} }
+
+    function populateResistanceInputs(resistances) {
+        mResistances.innerHTML = '';
+        resistanceTypes.forEach(type => {
+            const value = resistances ? resistances[type].max : 100;
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <label>${type}</label>
+                <input type="number" data-res-type="${type}" value="${value}" />
+            `;
+            mResistances.appendChild(div);
+        });
+    }
+
+    createBtn.onclick = ()=>{
+      editingId = null
+      modalTitle.textContent = 'Criar novo personagem'
+      mName.value = ''
+      mMaxHp.value = 100
+      mMaxArmor.value = 50
+      mMaxMana.value = 50
+      mRegenPercent.value = 10
+      populateResistanceInputs(null);
+      deleteBtn.style.display = 'none'
+      openModal()
+    }
+
+    function openEdit(id){
+      editingId = id
+      const c = chars.find(x=>x.id===id)
+      if(!c) return
+      modalTitle.textContent = 'Editar ' + c.name
+      mName.value = c.name
+      mMaxHp.value = c.maxHp
+      mMaxArmor.value = c.maxArmor
+      mMaxMana.value = c.maxMana
+      mRegenPercent.value = c.regenPercent || 0
+      populateResistanceInputs(c.resistances);
+      deleteBtn.style.display = 'inline-block'
+      openModal()
+    }
+    function openModal(){ modal.classList.add('show') }
+    function closeModal(){ modal.classList.remove('show'); editingId = null }
+
+    cancelModal.onclick = ()=>{ closeModal() }
+
+    // --- CORREÇÃO AQUI: manter os 'current' das resistências ao editar ---
+    saveModal.onclick = ()=>{
+      // lê os máximos das inputs (mas não zera os current existentes)
+      const resistanceInputs = mResistances.querySelectorAll('input');
+      const newMaxRes = {};
+      resistanceInputs.forEach(input => {
+          const type = input.dataset.resType;
+          newMaxRes[type] = Number(input.value) || 100;
+      });
+
+      if(editingId==null){
+        // comportamento de criação (igual ao original): cria resistências com current = 0
+        const resistances = createDefaultResistances();
+        mResistances.querySelectorAll('input').forEach(input => {
+            const type = input.dataset.resType;
+            resistances[type].max = Number(input.value) || 100;
+        });
+
+        const id = Date.now()
+        const name = mName.value || 'Sem nome'
+        const maxHp = Number(mMaxHp.value) || 0
+        const maxArmor = Number(mMaxArmor.value) || 0
+        const maxMana = Number(mMaxMana.value) || 0
+        const regen = Number(mRegenPercent.value) || 0
+
+        const newChar = {
+            id, name, hp:maxHp, maxHp, armor:maxArmor, maxArmor, mana:maxMana, maxMana, 
+            regenPercent: regen, 
+            resistances: resistances,
+            initial: {
+                hp:maxHp, armor:maxArmor, mana:maxMana, maxHp, maxArmor, maxMana, 
+                regenPercent: regen,
+                resistances: JSON.parse(JSON.stringify(resistances))
+            }
+        }
+        chars.push(newChar)
+      } else {
+        // editar sem resetar acúmulos: atualiza somente os máximos e mantém current
+        const c = chars.find(x=>x.id===editingId)
+        if(!c) return
+
+        // garante estrutura de resistências existente
+        if(!c.resistances) c.resistances = createDefaultResistances();
+
+        // atualiza só os max (mantendo current) e clamp caso current > novo max
+        resistanceTypes.forEach(type => {
+          const newMax = newMaxRes[type] || 100;
+          if(!c.resistances[type]) c.resistances[type] = { current: 0, max: newMax };
+          else c.resistances[type].max = newMax;
+          c.resistances[type].current = Math.min(c.resistances[type].current || 0, c.resistances[type].max);
+        });
+
+        // atualiza demais campos
+        c.name = mName.value || c.name;
+        c.maxHp = Number(mMaxHp.value) || c.maxHp;
+        c.maxArmor = Number(mMaxArmor.value) || c.maxArmor;
+        c.maxMana = Number(mMaxMana.value) || c.maxMana;
+        c.regenPercent = Number(mRegenPercent.value) || c.regenPercent || 0;
+
+        // ajusta hp/armor/mana só pra não ultrapassar os novos máximos (sem resetar para max)
+        c.hp = Math.min(c.hp, c.maxHp);
+        c.armor = Math.min(c.armor, c.maxArmor);
+        c.mana = Math.min(c.mana, c.maxMana);
+
+        // atualiza o estado inicial para refletir os novos máximos,
+        // mas preservando os current das resistências (para não perder acúmulos)
+        c.initial = {
+            hp: c.maxHp, armor: c.maxArmor, mana: c.maxMana,
+            maxHp: c.maxHp, maxArmor: c.maxArmor, maxMana: c.maxMana,
+            regenPercent: c.regenPercent,
+            resistances: JSON.parse(JSON.stringify(c.resistances))
+        };
+      }
+      commitChange();
+      render(); 
+      closeModal()
+    }
+
+    deleteBtn.onclick = ()=>{
+      if(editingId==null) return
+      const c = chars.find(x=>x.id===editingId)
+      if(!c) return
+      if(confirm('Excluir ' + c.name + '? Isso é permanente.')){
+        chars = chars.filter(x=>x.id!==editingId)
+        commitChange();
+        render(); 
+        closeModal()
+      }
+    }
+    
+    function setupTheme() {
+        const savedTheme = localStorage.getItem('theme-preference');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            themeSwitch.checked = true;
+        }
+        
+        themeSwitch.addEventListener('change', () => {
+            document.body.classList.toggle('light-mode');
+            if (document.body.classList.contains('light-mode')) {
+                localStorage.setItem('theme-preference', 'light');
+            } else {
+                localStorage.setItem('theme-preference', 'dark');
+            }
+        });
+    }
+
+    function updateUndoRedoButtons() {
+        undoBtn.disabled = historyIndex <= 0;
+        redoBtn.disabled = historyIndex >= history.length - 1;
+    }
+
+    function commitChange() {
+        if (historyIndex < history.length - 1) {
+            history.splice(historyIndex + 1);
+        }
+        history.push(JSON.parse(JSON.stringify(chars)));
+        if (history.length > HISTORY_LIMIT) {
+            history.shift();
+        }
+        historyIndex = history.length - 1;
+        save();
+        updateUndoRedoButtons();
+    }
+
+    function undo() {
+        if (historyIndex > 0) {
+            historyIndex--;
+            chars = JSON.parse(JSON.stringify(history[historyIndex]));
+            save();
+            render();
+            updateUndoRedoButtons();
+        }
+    }
+
+    function redo() {
+        if (historyIndex < history.length - 1) {
+            historyIndex++;
+            chars = JSON.parse(JSON.stringify(history[historyIndex]));
+            save();
+            render();
+            updateUndoRedoButtons();
+        }
+    }
+
+    undoBtn.onclick = undo;
+    redoBtn.onclick = redo;
+
+    searchEl.oninput = ()=>render()
+    window.addEventListener('keydown', e=>{ if(e.key === 'Insert'){ createBtn.click() } })
+
+    setupTheme();
+    commitChange(); // Save the initial state
+    render();
+  </script>
+</body>
+</html>
