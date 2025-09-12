@@ -777,7 +777,6 @@
                 const treePurchases = state.player.purchasedSkills[state.player.treeId] || {};
                 const purchase = treePurchases[skill.id];
                 const currentLevel = purchase ? purchase.level : 0;
-                const maxLevel = skill.type === 'Passiva' ? 1 : skill.maxUpgrades;
                 
                 card.className = 'skill-card bg-gray-700 rounded-lg p-3 shadow-lg w-40 flex flex-col items-center text-center';
                 card.style.left = `${skill.x}px`;
@@ -785,29 +784,57 @@
                 card.style.cursor = 'pointer';
 
                 if (currentLevel > 0) card.classList.add('player-purchased');
-                if (currentLevel >= maxLevel) card.classList.add('player-maxed');
+
+                const isUpgradableAfterPurchase = skill.type === 'Ativa' || skill.type === 'Suprema';
+                const maxUpgrades = skill.maxUpgrades;
+
+                let isMaxed = false;
+                if (skill.type === 'Passiva') {
+                    isMaxed = currentLevel >= 1;
+                } else if (isUpgradableAfterPurchase) {
+                    isMaxed = currentLevel >= maxUpgrades + 1;
+                } else { // Talento
+                    isMaxed = currentLevel >= maxUpgrades;
+                }
+
+                if (isMaxed) {
+                    card.classList.add('player-maxed');
+                }
                 
                 let costHTML = '';
                 let progressHTML = '';
 
-                if (currentLevel >= maxLevel) {
+                if (isMaxed) {
                     costHTML = `<div class="text-xs font-semibold mt-2 text-amber-400">MAX</div>`;
                 } else if (currentLevel === 0) {
-                     costHTML = `<div class="text-xs font-semibold mt-2 text-yellow-400">Custo: ${skill.cost}</div>`;
-                } else { // has levels but not maxed
-                    const upgradeCost = skill.type === 'Talento' ? skill.cost : skill.upgradeCost;
-                     costHTML = `<div class="text-xs font-semibold mt-2 text-yellow-400">Melhoria: ${upgradeCost}</div>`;
+                     costHTML = `<div class="text-xs font-semibold mt-2 text-yellow-400">Compra: ${skill.cost}</div>`;
+                } else {
+                    let upgradeCost = (skill.type === 'Talento') ? skill.cost : skill.upgradeCost;
+                     costHTML = `<div class="text-xs font-semibold mt-2 text-yellow-400">Custo: ${upgradeCost}</div>`;
                 }
                 
-                if (skill.type !== 'Passiva') {
+                if (skill.type === 'Passiva') {
+                     progressHTML = `<div class="h-[34px] flex items-center justify-center">${currentLevel > 0 ? '<span class="text-xs text-green-400">Adquirida</span>' : ''}</div>`;
+                } else if (isUpgradableAfterPurchase) {
+                    if (currentLevel === 0) {
+                        progressHTML = `<div class="h-[34px] flex items-center justify-center"><span class="text-xs text-gray-400">Não Adquirida</span></div>`;
+                    } else {
+                        const upgradeLevel = currentLevel - 1;
+                        const upgradeProgress = maxUpgrades > 0 ? (upgradeLevel / maxUpgrades) * 100 : (isMaxed ? 100 : 0);
+                        progressHTML = `
+                            <div class="w-full bg-gray-600 rounded-full h-2.5 mt-2">
+                                <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${upgradeProgress}%"></div>
+                            </div>
+                            <span class="text-xs mt-1">Melhorias: ${upgradeLevel} / ${maxUpgrades}</span>
+                        `;
+                    }
+                } else { // Talento
                     progressHTML = `
                         <div class="w-full bg-gray-600 rounded-full h-2.5 mt-2">
-                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${ (currentLevel / maxLevel) * 100}%"></div>
+                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${ (currentLevel / maxUpgrades) * 100}%"></div>
                         </div>
-                        <span class="text-xs mt-1">${currentLevel} / ${maxLevel}</span>
+                        <span class="text-xs mt-1">${currentLevel} / ${maxUpgrades}</span>
                     `;
-                } else {
-                     progressHTML = `<div class="h-[34px] flex items-center justify-center">${currentLevel > 0 ? '<span class="text-xs text-green-400">Adquirida</span>' : ''}</div>`;
                 }
 
 
@@ -838,7 +865,16 @@
                 const treePurchases = state.player.purchasedSkills[treeId];
 
                 const purchase = treePurchases[skill.id] || { level: 0 };
-                const maxLevel = skill.type === 'Passiva' ? 1 : skill.maxUpgrades;
+                
+                const isUpgradableAfterPurchase = skill.type === 'Ativa' || skill.type === 'Suprema';
+                let maxLevel;
+                if (skill.type === 'Passiva') {
+                    maxLevel = 1;
+                } else if (isUpgradableAfterPurchase) {
+                    maxLevel = skill.maxUpgrades + 1;
+                } else { // Talento
+                    maxLevel = skill.maxUpgrades;
+                }
 
                 if (purchase.level >= maxLevel) return;
 
@@ -846,7 +882,7 @@
 
                 const availablePoints = (state.player.level * 2) + state.player.extraPoints - calculateSpentPoints();
                 if (availablePoints < cost) {
-                    showInfoModal('Aviso', 'Pontos de habilidade insuficientes.');
+                    showInfoModal('Aviso', 'Pontos de talento insuficientes.');
                     return;
                 }
 
@@ -937,5 +973,7 @@
     </script>
 </body>
 </html>
+
+
 
 
