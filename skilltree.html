@@ -128,8 +128,7 @@
                         <select id="tree-select" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
                     </div>
                      <div class="mt-4 flex space-x-2">
-                        <button id="save-trees-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Salvar Tudo</button>
-                        <button id="delete-tree-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Excluir Árvore</button>
+                         <button id="delete-tree-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Excluir Árvore</button>
                     </div>
                     <hr class="my-4 border-gray-600">
                     <div>
@@ -257,6 +256,30 @@
         </div>
     </div>
 
+    <!-- Modal de Confirmação -->
+    <div id="confirm-modal" class="modal fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="modal-content bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md transform scale-95">
+            <h2 id="confirm-modal-title" class="text-xl font-bold mb-4 text-white">Confirmar Ação</h2>
+            <p id="confirm-modal-body" class="text-gray-300 mb-6">Você tem certeza?</p>
+            <div class="flex justify-end space-x-3">
+                <button type="button" id="confirm-modal-cancel-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Cancelar</button>
+                <button type="button" id="confirm-modal-confirm-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Informação -->
+    <div id="info-modal" class="modal fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="modal-content bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md transform scale-95">
+            <h2 id="info-modal-title" class="text-xl font-bold mb-4 text-white">Informação</h2>
+            <p id="info-modal-body" class="text-gray-300 mb-6"></p>
+            <div class="flex justify-end">
+                <button type="button" id="info-modal-ok-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors">OK</button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Estado da Aplicação
@@ -269,7 +292,7 @@
                 player: {
                     level: 1,
                     extraPoints: 0,
-                    purchasedSkills: {},
+                    purchasedSkills: {}, // Ex: { treeId1: { skillId1: { level: 2 } }, treeId2: { ... } }
                     treeId: null,
                 },
             };
@@ -284,14 +307,55 @@
             const createTreeBtn = getEl('create-tree-btn');
             const treeSelect = getEl('tree-select');
             const playerTreeSelect = getEl('player-tree-select');
-            const saveTreesBtn = getEl('save-trees-btn');
             const deleteTreeBtn = getEl('delete-tree-btn');
             const canvas = getEl('skill-editor-canvas');
             const skillModal = getEl('skill-modal');
             const skillOptionsModal = getEl('skill-options-modal');
             const skillForm = getEl('skill-form');
             const addSkillBtn = getEl('add-skill-btn');
+            const confirmModal = getEl('confirm-modal');
+            const infoModal = getEl('info-modal');
+            let onConfirmCallback = null;
             
+            // --- LÓGICA DE MODAIS CUSTOMIZADOS ---
+            function showInfoModal(title, body) {
+                getEl('info-modal-title').textContent = title;
+                getEl('info-modal-body').textContent = body;
+                infoModal.classList.remove('hidden');
+                infoModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100');
+            }
+
+            function closeInfoModal() {
+                infoModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
+                setTimeout(() => infoModal.classList.add('hidden'), 300);
+            }
+
+            function showConfirmModal(title, body, onConfirm) {
+                getEl('confirm-modal-title').textContent = title;
+                getEl('confirm-modal-body').textContent = body;
+                onConfirmCallback = onConfirm;
+                confirmModal.classList.remove('hidden');
+                confirmModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100');
+            }
+
+            function closeConfirmModal() {
+                confirmModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
+                setTimeout(() => {
+                    confirmModal.classList.add('hidden');
+                    onConfirmCallback = null;
+                }, 300);
+            }
+
+            getEl('info-modal-ok-btn').addEventListener('click', closeInfoModal);
+            getEl('confirm-modal-cancel-btn').addEventListener('click', closeConfirmModal);
+            getEl('confirm-modal-confirm-btn').addEventListener('click', () => {
+                if (typeof onConfirmCallback === 'function') {
+                    onConfirmCallback();
+                }
+                closeConfirmModal();
+            });
+
+
             // --- LÓGICA DE ABAS ---
             function switchTab(tab) {
                 if (tab === 'creator') {
@@ -306,9 +370,7 @@
                     tabCreator.classList.remove('active');
                     tabPlayer.classList.add('active');
                     updatePlayerTreeSelect();
-                    if (state.player.treeId) {
-                         renderPlayerTree();
-                    }
+                    renderPlayerTree();
                 }
             }
 
@@ -318,24 +380,28 @@
             // --- LÓGICA DE DADOS (ÁRVORES E HABILIDADES) ---
             function saveState() {
                 localStorage.setItem('skillTreeBuilder', JSON.stringify(state.trees));
-                alert('Árvores salvas com sucesso!');
+                localStorage.setItem('skillTreePlayer', JSON.stringify(state.player));
             }
 
             function loadState() {
                 const savedTrees = localStorage.getItem('skillTreeBuilder');
+                const savedPlayer = localStorage.getItem('skillTreePlayer');
                 if (savedTrees) {
                     state.trees = JSON.parse(savedTrees);
                     if (Object.keys(state.trees).length > 0) {
                         state.activeTreeId = Object.keys(state.trees)[0];
                     }
-                    updateTreeSelect();
                 }
+                if (savedPlayer) {
+                    state.player = JSON.parse(savedPlayer);
+                }
+                updateTreeSelect();
             }
 
             function createTree() {
                 const name = treeNameInput.value.trim();
                 if (!name) {
-                    alert('Por favor, insira um nome para a árvore.');
+                    showInfoModal('Aviso', 'Por favor, insira um nome para a árvore.');
                     return;
                 }
                 const id = `tree-${Date.now()}`;
@@ -344,37 +410,62 @@
                 treeNameInput.value = '';
                 updateTreeSelect();
                 renderActiveTree();
+                saveState();
             }
 
             function deleteTree() {
-                if (!state.activeTreeId || !confirm(`Tem certeza que deseja excluir a árvore "${state.trees[state.activeTreeId].name}"?`)) {
-                    return;
-                }
-                delete state.trees[state.activeTreeId];
-                const remainingTreeIds = Object.keys(state.trees);
-                state.activeTreeId = remainingTreeIds.length > 0 ? remainingTreeIds[0] : null;
-                updateTreeSelect();
-                renderActiveTree();
+                if (!state.activeTreeId) return;
+                const treeName = state.trees[state.activeTreeId].name;
+                
+                showConfirmModal(
+                    'Excluir Árvore',
+                    `Tem certeza que deseja excluir a árvore "${treeName}"? Todo o progresso do jogador nesta árvore também será perdido.`,
+                    () => {
+                        const treeIdToDelete = state.activeTreeId;
+                        delete state.trees[treeIdToDelete];
+                        if (state.player.purchasedSkills[treeIdToDelete]) {
+                            delete state.player.purchasedSkills[treeIdToDelete];
+                        }
+                        
+                        const remainingTreeIds = Object.keys(state.trees);
+                        state.activeTreeId = remainingTreeIds.length > 0 ? remainingTreeIds[0] : null;
+                        
+                        if (state.player.treeId === treeIdToDelete) {
+                            state.player.treeId = null;
+                        }
+                        
+                        updateTreeSelect();
+                        renderActiveTree();
+                        saveState();
+                    }
+                );
             }
+
 
             function updateTreeSelect() {
                 treeSelect.innerHTML = '';
-                playerTreeSelect.innerHTML = '<option value="">-- Nenhuma --</option>';
-                for (const id in state.trees) {
-                    const option = new Option(state.trees[id].name, id);
-                    treeSelect.add(option.cloneNode(true));
-                    playerTreeSelect.add(option);
+                const hasTrees = Object.keys(state.trees).length > 0;
+
+                if (!hasTrees) {
+                    const option = new Option('Nenhuma árvore criada', '');
+                    option.disabled = true;
+                    treeSelect.add(option);
+                } else {
+                    for (const id in state.trees) {
+                        const option = new Option(state.trees[id].name, id);
+                        treeSelect.add(option);
+                    }
                 }
+                
                 if (state.activeTreeId) {
                     treeSelect.value = state.activeTreeId;
                 }
-                if (state.player.treeId) {
-                    playerTreeSelect.value = state.player.treeId;
-                }
+                
+                updatePlayerTreeSelect();
             }
             
             function updatePlayerTreeSelect() {
-                const currentVal = playerTreeSelect.value;
+                const currentVal = state.player.treeId;
                 playerTreeSelect.innerHTML = '<option value="">-- Nenhuma --</option>';
                 for (const id in state.trees) {
                     const option = new Option(state.trees[id].name, id);
@@ -389,38 +480,33 @@
             });
 
             createTreeBtn.addEventListener('click', createTree);
-            saveTreesBtn.addEventListener('click', saveState);
             deleteTreeBtn.addEventListener('click', deleteTree);
 
             // --- LÓGICA DO EDITOR VISUAL ---
             
-            // Abrir modal para nova habilidade com duplo clique
             canvas.addEventListener('dblclick', (e) => {
                 if (!state.activeTreeId) {
-                    alert('Crie ou selecione uma árvore primeiro.');
+                    showInfoModal('Aviso', 'Crie ou selecione uma árvore primeiro.');
                     return;
                 }
-                if (e.target !== canvas) return;
+                if (e.target !== canvas && e.target !== getEl('editor-transform-container')) return;
                 const transform = state.editorTransform;
                 const rect = canvas.getBoundingClientRect();
-                // Converte as coordenadas do clique para o sistema de coordenadas do canvas transformado
                 const x = (e.clientX - rect.left - transform.x) / transform.scale;
                 const y = (e.clientY - rect.top - transform.y) / transform.scale;
                 state.editingSkillId = null;
                 openSkillModal({ x, y });
             });
             
-            // Abrir modal com o botão "+"
             addSkillBtn.addEventListener('click', () => {
                 if (!state.activeTreeId) {
-                    alert('Crie ou selecione uma árvore primeiro.');
+                    showInfoModal('Aviso', 'Crie ou selecione uma árvore primeiro.');
                     return;
                 }
                 const transform = state.editorTransform;
                 const rect = canvas.getBoundingClientRect();
-                // Centraliza a nova habilidade na visão atual
-                const x = (rect.width / 2 - transform.x) / transform.scale;
-                const y = (rect.height / 2 - transform.y) / transform.scale;
+                const x = (rect.width / 2 - transform.x) / transform.scale - 80; // center card
+                const y = (rect.height / 2 - transform.y) / transform.scale - 60; // center card
                 state.editingSkillId = null;
                 openSkillModal({ x, y });
             });
@@ -457,7 +543,6 @@
                     <div class="text-xs font-semibold mt-2 text-yellow-400">Custo: ${skill.cost}</div>
                 `;
                 
-                // Drag and Drop
                 let isDragging = false;
                 card.addEventListener('mousedown', (e) => {
                      if (e.target.closest('.edit-icon')) return;
@@ -466,7 +551,6 @@
                      card.style.zIndex = 10;
                 });
                 
-                // Movimento é gerenciado pelo listener do canvas para evitar problemas com o mouse saindo do card
                 window.addEventListener('mousemove', (e) => {
                     if (!isDragging) return;
                     const transform = state.editorTransform;
@@ -481,9 +565,9 @@
                     isDragging = false;
                     card.style.cursor = 'grab';
                     card.style.zIndex = 1;
+                    saveState();
                 });
                 
-                // Clicar para opções no ícone
                 const editIcon = card.querySelector('.edit-icon');
                 editIcon.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -494,7 +578,7 @@
                 getEl('editor-transform-container').appendChild(card);
             }
 
-            // --- LÓGICA DOS MODAIS ---
+            // --- LÓGICA DOS MODAIS DE HABILIDADE ---
             
             function openSkillModal(pos = null) {
                 skillForm.reset();
@@ -525,7 +609,7 @@
             
             function closeSkillModal() {
                 skillModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
-                skillModal.classList.add('hidden');
+                setTimeout(() => skillModal.classList.add('hidden'), 300);
             }
 
             function openSkillOptionsModal() {
@@ -535,7 +619,7 @@
             
             function closeSkillOptionsModal() {
                 skillOptionsModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
-                skillOptionsModal.classList.add('hidden');
+                 setTimeout(() => skillOptionsModal.classList.add('hidden'), 300);
             }
 
             getEl('skill-type').addEventListener('change', updateModalFields);
@@ -570,20 +654,20 @@
                     name: getEl('skill-name').value,
                     description: getEl('skill-description').value,
                     type: getEl('skill-type').value,
-                    cost: parseInt(getEl('skill-cost').value),
-                    upgradeCost: parseInt(getEl('skill-upgrade-cost').value),
-                    maxUpgrades: parseInt(getEl('skill-max-upgrades').value),
-                    x: state.editingSkillId ? tree.skills[state.editingSkillId].x : parseFloat(skillForm.dataset.x),
-                    y: state.editingSkillId ? tree.skills[state.editingSkillId].y : parseFloat(skillForm.dataset.y),
+                    cost: parseInt(getEl('skill-cost').value) || 1,
+                    upgradeCost: parseInt(getEl('skill-upgrade-cost').value) || 1,
+                    maxUpgrades: parseInt(getEl('skill-max-upgrades').value) || 1,
+                    x: state.editingSkillId ? tree.skills[state.editingSkillId].x : parseFloat(skillForm.dataset.x || 0),
+                    y: state.editingSkillId ? tree.skills[state.editingSkillId].y : parseFloat(skillForm.dataset.y || 0),
                 };
                 tree.skills[skillData.id] = skillData;
                 closeSkillModal();
                 renderActiveTree();
+                saveState();
             });
             
             getEl('cancel-skill').addEventListener('click', closeSkillModal);
             
-            // Listeners do modal de opções
             getEl('edit-skill-btn').addEventListener('click', () => {
                 closeSkillOptionsModal();
                 openSkillModal();
@@ -593,6 +677,7 @@
                 delete tree.skills[state.editingSkillId];
                 closeSkillOptionsModal();
                 renderActiveTree();
+                saveState();
             });
             getEl('cancel-options').addEventListener('click', closeSkillOptionsModal);
             
@@ -604,76 +689,93 @@
             const skillPointsDisplay = getEl('skill-points-display');
             const resetPlayerBtn = getEl('reset-player-points');
             
-            function calculateTotalPoints() {
-                const level = parseInt(playerLevelInput.value) || 1;
-                const extra = parseInt(extraPointsInput.value) || 0;
-                return (level * 2) + extra;
-            }
-
             function calculateSpentPoints() {
                 let spent = 0;
-                if (!state.player.treeId) return 0;
+                // Itera sobre todas as árvores onde o jogador gastou pontos
+                for (const treeId in state.player.purchasedSkills) {
+                    const tree = state.trees[treeId];
+                    if (!tree) continue; // Pula se a árvore foi deletada
 
-                const tree = state.trees[state.player.treeId];
-                for (const skillId in state.player.purchasedSkills) {
-                    const skill = tree.skills[skillId];
-                    const purchase = state.player.purchasedSkills[skillId];
-                    if (skill) {
-                        spent += skill.cost;
-                        if (purchase.level > 1) {
-                            if(skill.type === 'Talento') {
-                                spent += skill.cost * (purchase.level - 1);
-                            } else { // Ativa e Suprema
-                                spent += skill.upgradeCost * (purchase.level - 1);
+                    const purchased = state.player.purchasedSkills[treeId] || {};
+                    for (const skillId in purchased) {
+                        const skill = tree.skills[skillId];
+                        const purchase = purchased[skillId];
+                        if (skill) {
+                            spent += skill.cost;
+                            if (purchase.level > 1) {
+                                if (skill.type === 'Talento') {
+                                    spent += skill.cost * (purchase.level - 1);
+                                } else { // Ativa e Suprema
+                                    spent += skill.upgradeCost * (purchase.level - 1);
+                                }
                             }
                         }
                     }
                 }
                 return spent;
             }
-            
-            function updatePlayerPoints() {
-                const total = calculateTotalPoints();
+
+            function updatePlayerPointsDisplay() {
+                const total = (state.player.level * 2) + state.player.extraPoints;
                 const spent = calculateSpentPoints();
                 const available = total - spent;
                 skillPointsDisplay.textContent = available;
                 getEl('spent-points-display').textContent = spent;
             }
+
+            function handlePlayerInputChange() {
+                state.player.level = parseInt(playerLevelInput.value) || 1;
+                state.player.extraPoints = parseInt(extraPointsInput.value) || 0;
+                updatePlayerPointsDisplay();
+                saveState();
+            }
             
-            playerLevelInput.addEventListener('input', updatePlayerPoints);
-            extraPointsInput.addEventListener('input', updatePlayerPoints);
+            playerLevelInput.addEventListener('input', handlePlayerInputChange);
+            extraPointsInput.addEventListener('input', handlePlayerInputChange);
+            
             resetPlayerBtn.addEventListener('click', () => {
-                if(confirm('Tem certeza que deseja resetar os pontos desta árvore?')){
-                    state.player.purchasedSkills = {};
-                    renderPlayerTree();
-                }
+                if (!state.player.treeId) return;
+                showConfirmModal(
+                    'Resetar Pontos',
+                    'Tem certeza que deseja resetar os pontos desta árvore?',
+                    () => {
+                        state.player.purchasedSkills[state.player.treeId] = {};
+                        renderPlayerTree();
+                        saveState();
+                    }
+                );
             });
             
             playerTreeSelect.addEventListener('change', () => {
                 state.player.treeId = playerTreeSelect.value;
-                state.player.purchasedSkills = {};
                 renderPlayerTree();
             });
             
             function renderPlayerTree() {
                 const container = getEl('player-transform-container');
                 container.innerHTML = '';
-                if (!state.player.treeId) {
-                    updatePlayerPoints();
+                
+                playerLevelInput.value = state.player.level;
+                extraPointsInput.value = state.player.extraPoints;
+
+                const treeId = state.player.treeId;
+                if (!treeId || !state.trees[treeId]) {
+                    updatePlayerPointsDisplay();
                     return;
                 };
 
-                const tree = state.trees[state.player.treeId];
+                const tree = state.trees[treeId];
                 for(const skillId in tree.skills) {
                     createPlayerSkillCard(tree.skills[skillId]);
                 }
                 applyTransform('playerTransform');
-                updatePlayerPoints();
+                updatePlayerPointsDisplay();
             }
             
             function createPlayerSkillCard(skill) {
                 const card = document.createElement('div');
-                const purchase = state.player.purchasedSkills[skill.id];
+                const treePurchases = state.player.purchasedSkills[state.player.treeId] || {};
+                const purchase = treePurchases[skill.id];
                 const currentLevel = purchase ? purchase.level : 0;
                 const maxLevel = skill.type === 'Passiva' ? 1 : skill.maxUpgrades;
                 
@@ -685,25 +787,29 @@
                 if (currentLevel > 0) card.classList.add('player-purchased');
                 if (currentLevel >= maxLevel) card.classList.add('player-maxed');
                 
-                let costHTML;
-                let progressHTML;
+                let costHTML = '';
+                let progressHTML = '';
 
-                if (skill.type === 'Passiva') {
-                    progressHTML = '<div class="h-[34px] mt-2"></div>'; // Placeholder for consistent card height
-                    if (currentLevel > 0) {
-                         costHTML = `<div class="text-xs font-semibold mt-2 text-green-400">Adquirida</div>`;
-                    } else {
-                         costHTML = `<div class="text-xs font-semibold mt-2 text-yellow-400">Custo: ${skill.cost}</div>`;
-                    }
-                } else {
-                    costHTML = `<div class="text-xs font-semibold mt-2 text-yellow-400">Custo: ${currentLevel === 0 ? skill.cost : (skill.type === 'Talento' ? skill.cost : skill.upgradeCost)}</div>`;
+                if (currentLevel >= maxLevel) {
+                    costHTML = `<div class="text-xs font-semibold mt-2 text-amber-400">MAX</div>`;
+                } else if (currentLevel === 0) {
+                     costHTML = `<div class="text-xs font-semibold mt-2 text-yellow-400">Custo: ${skill.cost}</div>`;
+                } else { // has levels but not maxed
+                    const upgradeCost = skill.type === 'Talento' ? skill.cost : skill.upgradeCost;
+                     costHTML = `<div class="text-xs font-semibold mt-2 text-yellow-400">Melhoria: ${upgradeCost}</div>`;
+                }
+                
+                if (skill.type !== 'Passiva') {
                     progressHTML = `
                         <div class="w-full bg-gray-600 rounded-full h-2.5 mt-2">
                             <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${ (currentLevel / maxLevel) * 100}%"></div>
                         </div>
                         <span class="text-xs mt-1">${currentLevel} / ${maxLevel}</span>
                     `;
+                } else {
+                     progressHTML = `<div class="h-[34px] flex items-center justify-center">${currentLevel > 0 ? '<span class="text-xs text-green-400">Adquirida</span>' : ''}</div>`;
                 }
+
 
                 card.innerHTML = `
                     <span class="type-badge type-${skill.type}">${skill.type}</span>
@@ -723,33 +829,48 @@
             }
             
             function purchaseSkill(skill) {
-                const purchase = state.player.purchasedSkills[skill.id] || { level: 0 };
+                const treeId = state.player.treeId;
+                if (!treeId) return;
+
+                if (!state.player.purchasedSkills[treeId]) {
+                    state.player.purchasedSkills[treeId] = {};
+                }
+                const treePurchases = state.player.purchasedSkills[treeId];
+
+                const purchase = treePurchases[skill.id] || { level: 0 };
                 const maxLevel = skill.type === 'Passiva' ? 1 : skill.maxUpgrades;
 
                 if (purchase.level >= maxLevel) return;
 
                 let cost = (purchase.level === 0) ? skill.cost : (skill.type === 'Talento' ? skill.cost : skill.upgradeCost);
 
-                const availablePoints = calculateTotalPoints() - calculateSpentPoints();
+                const availablePoints = (state.player.level * 2) + state.player.extraPoints - calculateSpentPoints();
                 if (availablePoints < cost) {
-                    alert('Pontos de habilidade insuficientes.');
+                    showInfoModal('Aviso', 'Pontos de habilidade insuficientes.');
                     return;
                 }
 
                 purchase.level++;
-                state.player.purchasedSkills[skill.id] = purchase;
+                treePurchases[skill.id] = purchase;
                 renderPlayerTree();
+                saveState();
             }
             
             function refundSkillPoint(skill) {
-                const purchase = state.player.purchasedSkills[skill.id];
+                const treeId = state.player.treeId;
+                if (!treeId) return;
+                const treePurchases = state.player.purchasedSkills[treeId];
+                if (!treePurchases) return;
+
+                const purchase = treePurchases[skill.id];
                 if (!purchase || purchase.level === 0) return;
 
                 purchase.level--;
                 if (purchase.level === 0) {
-                    delete state.player.purchasedSkills[skill.id];
+                    delete treePurchases[skill.id];
                 }
                 renderPlayerTree();
+                saveState();
             }
 
             // --- LÓGICA DE PAN & ZOOM DO CANVAS ---
@@ -816,3 +937,5 @@
     </script>
 </body>
 </html>
+
+
