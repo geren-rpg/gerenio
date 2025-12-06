@@ -3,168 +3,394 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gerenciador de Personagens (Bootstrap)</title>
+  <title>Gerenciador de Personagens (Pixel Art)</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Pixel Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   
   <style>
-    /* Variáveis para Manter a Identidade Visual (Sobrescrevendo/Extendendo Bootstrap) */
+    /* Fundo Pixel Art */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Estrelas animadas para modo escuro */
+body:not(.light-mode)::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20% 30%, white, transparent),
+    radial-gradient(2px 2px at 60% 70%, white, transparent),
+    radial-gradient(1px 1px at 50% 50%, white, transparent),
+    radial-gradient(1px 1px at 80% 10%, white, transparent),
+    radial-gradient(2px 2px at 90% 60%, white, transparent),
+    radial-gradient(1px 1px at 30% 80%, white, transparent),
+    radial-gradient(1px 1px at 70% 40%, white, transparent),
+    radial-gradient(2px 2px at 40% 20%, white, transparent),
+    radial-gradient(1px 1px at 10% 90%, white, transparent),
+    radial-gradient(1px 1px at 95% 30%, white, transparent);
+  background-size: 
+    200% 200%,
+    180% 180%,
+    250% 250%,
+    220% 220%,
+    190% 190%,
+    240% 240%,
+    210% 210%,
+    230% 230%,
+    260% 260%,
+    170% 170%;
+  background-position: 
+    0% 0%,
+    20% 20%,
+    40% 40%,
+    60% 60%,
+    80% 80%,
+    100% 100%,
+    120% 120%,
+    140% 140%,
+    160% 160%,
+    180% 180%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.4;
+  animation: starsMove 120s linear infinite;
+}
+
+/* Partículas flutuantes para modo claro */
+body.light-mode::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(255, 190, 11, 0.3) 0%, transparent 2%),
+    radial-gradient(circle at 40% 40%, rgba(255, 0, 110, 0.2) 0%, transparent 2%),
+    radial-gradient(circle at 60% 60%, rgba(0, 217, 255, 0.2) 0%, transparent 2%),
+    radial-gradient(circle at 80% 20%, rgba(157, 78, 221, 0.2) 0%, transparent 2%),
+    radial-gradient(circle at 10% 30%, rgba(255, 190, 11, 0.2) 0%, transparent 2%),
+    radial-gradient(circle at 90% 70%, rgba(255, 0, 110, 0.3) 0%, transparent 2%),
+    radial-gradient(circle at 30% 90%, rgba(0, 217, 255, 0.3) 0%, transparent 2%),
+    radial-gradient(circle at 70% 50%, rgba(157, 78, 221, 0.3) 0%, transparent 2%);
+  background-size: 
+    20px 20px,
+    30px 30px,
+    25px 25px,
+    35px 35px,
+    28px 28px,
+    22px 22px,
+    32px 32px,
+    26px 26px;
+  z-index: -1;
+  pointer-events: none;
+  animation: particlesFloat 60s linear infinite;
+}
+
+/* Animação das estrelas */
+@keyframes starsMove {
+  0% {
+    background-position: 
+      0% 0%,
+      20% 20%,
+      40% 40%,
+      60% 60%,
+      80% 80%,
+      100% 100%,
+      120% 120%,
+      140% 140%,
+      160% 160%,
+      180% 180%;
+  }
+  100% {
+    background-position: 
+      200% 200%,
+      220% 220%,
+      240% 240%,
+      260% 260%,
+      280% 280%,
+      300% 300%,
+      320% 320%,
+      340% 340%,
+      360% 360%,
+      380% 380%;
+  }
+}
+
+/* Animação das partículas */
+@keyframes particlesFloat {
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-50px) translateX(20px);
+  }
+  50% {
+    transform: translateY(0) translateX(40px);
+  }
+  75% {
+    transform: translateY(110px) translateX(10px);
+  }
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+}
+
+/* Remover a animação pulseGlow antiga */
+/* @keyframes pulseGlow foi removida */
+    /* Variáveis Pixel Art */
     :root {
-      --bg-custom: #0f1720;
-      --card-custom: #1e293b;
-      --text-custom: #e2e8f0;
-      --pill-custom: #334155;
-      --accent-gradient: linear-gradient(90deg, #38bdf8, #0ea5e9);
-      --danger-custom: #f87171;
+      --bg-dark: #1a1a2e;
+      --bg-darker: #0f0f1e;
+      --card-bg: #16213e;
+      --text-primary: #a0a0a0c5;
+      --text-secondary: #a4a4a4;
+      --accent-1: #00d9ff;
+      --accent-2: #ff006e;
+      --accent-3: #ffbe0b;
+      --hp-color: #ff0000;
+      --armor-color: #08a4ff;
+      --mana-color: #a83eff;
+      --border-width: 4px;
     }
 
     body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background-color: var(--bg-custom);
-      color: var(--text-custom);
-      transition: background-color 0.3s ease, color 0.3s ease;
-      min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
+      font-family: 'Press Start 2P', cursive;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;    
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
     }
 
-    /* Light Mode Overrides */
+    /* Light Mode */
     body.light-mode {
-      --bg-custom: #f1f5f9;
-      --card-custom: #ffffff;
-      --text-custom: #0f172a;
-      --pill-custom: #e2e8f0;
+      --bg-dark: #f0e6d2;
+      --bg-darker: #e8dcc0;
+      --card-bg: #ffffff;
+      --text-primary: #2d2d2d;
+      --text-secondary: #666666;
     }
 
-    /* Efeitos de Fundo do Modo Escuro */
-    body:not(.light-mode)::before {
+    /* Fundo Pixel Art */
+    body::before {
       content: '';
-      position: absolute;
+      position: fixed;
       inset: 0;
-      background-image: linear-gradient(135deg, #0a0a23 0%, #200a23 100%);
-      z-index: -2;
+      background-image: 
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px);
+      z-index: -1;
+      pointer-events: none;
     }
+
     body:not(.light-mode)::after {
       content: '';
-      position: absolute;
-      width: 150vmax;
-      height: 150vmax;
-      left: 50%;
-      top: 50%;
-      background: radial-gradient(ellipse at center, rgba(100, 120, 255, 0.08) 0%, rgba(100, 120, 255, 0) 60%);
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(0, 217, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(157, 78, 221, 0.1) 0%, transparent 50%);
       z-index: -1;
-      animation: moveGlow 20s linear infinite;
-    }
-    @keyframes moveGlow {
-      from { transform: translate(-50%, -50%) rotate(0deg); }
-      to { transform: translate(-50%, -50%) rotate(360deg); }
+      pointer-events: none;
+      animation: pulseGlow 8s ease-in-out infinite;
     }
 
-    /* Estilização Customizada dos Cards para o Tema */
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Borda Pixel Art */
+    .pixel-border {
+      border: var(--border-width) solid var(--text-primary);
+      box-shadow: 
+        0 0 0 calc(var(--border-width) * 2) var(--bg-darker),
+        0 0 0 calc(var(--border-width) * 3) var(--text-primary);
+      position: relative;
+    }
+
+    .pixel-border::before {
+      content: '';
+      position: absolute;
+      top: calc(var(--border-width) * -1);
+      left: calc(var(--border-width) * -1);
+      right: calc(var(--border-width) * -1);
+      bottom: calc(var(--border-width) * -1);
+      border: var(--border-width) solid var(--bg-darker);
+      pointer-events: none;
+    }
+
+    /* Cards */
     .rpg-card {
-      background-color: var(--card-custom);
-      color: var(--text-custom);
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.3);
-      transition: transform 0.18s, box-shadow 0.18s, background-color 0.3s ease;
-    }
-    body.light-mode .rpg-card {
-      border: 1px solid rgba(0,0,0,0.1);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      background-color: var(--card-bg);
+      color: var(--text-primary);
+      border: 4px solid var(--text-primary);
+      box-shadow: 8px 8px 0 rgba(0,0,0,0.3);
+      transition: transform 0.1s, box-shadow 0.1s;
+      position: relative;
     }
 
-    /* Drag & Drop - Animações e Estados */
+    .rpg-card:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 10px 10px 0 rgba(0,0,0,0.4);
+    }
+
+    /* Drag States */
     .rpg-card.dragging {
-      opacity: 0.95;
-      transform: scale(1.04) rotate(-1.5deg);
-      box-shadow: 0 20px 40px rgba(2,6,12,0.7);
+      opacity: 0.9;
+      transform: scale(1.05) rotate(-2deg);
+      box-shadow: 12px 12px 0 rgba(0,0,0,0.5);
       z-index: 100;
     }
+
     .rpg-card.dragover {
-      outline: 2px dashed rgba(78, 160, 255, 0.5);
-    }
-    .rpg-card.moved { animation: pop .36s ease; }
-    .rpg-card.damaged {
-      animation: shake 0.1s ease-in-out;
-      box-shadow: inset 0 0 0 1px var(--danger-custom), 0 0 15px rgba(255, 0, 0, 0.5);
+      outline: 4px dashed var(--accent-1);
+      outline-offset: 4px;
     }
 
-    /* Ghost Element para Dragging */
+    .rpg-card.moved { 
+      animation: pixelPop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    .rpg-card.damaged {
+      animation: pixelShake 0.4s;
+      box-shadow: 0 0 0 4px var(--hp-color), 8px 8px 0 rgba(0,0,0,0.3);
+    }
+
+    @keyframes pixelPop {
+      0% { transform: scale(0.95); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes pixelShake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+      20%, 40%, 60%, 80% { transform: translateX(4px); }
+    }
+
+    /* Ghost Element */
     .ghost-follow {
       position: fixed;
       pointer-events: none;
       z-index: 1000;
-      opacity: 0.9;
-      transform: translate(-50%, -50%) rotate(-2deg);
+      opacity: 0.85;
+      transform: translate(-50%, -50%) rotate(-3deg);
+      filter: drop-shadow(8px 8px 0 rgba(0,0,0,0.5));
     }
 
-    @keyframes pop {
-      0% { transform: translateY(6px) scale(0.99); }
-      50% { transform: translateY(-6px) scale(1.02); }
-      100% { transform: translateY(0) scale(1); }
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-5px) rotate(-1deg); }
-      40% { transform: translateX(5px) rotate(1deg); }
-      60% { transform: translateX(-5px) rotate(-1deg); }
-      80% { transform: translateX(5px) rotate(1deg); }
-    }
-
-    /* Customização dos Botões Flutuantes no Card */
+    /* Botões Flutuantes Pixel */
     .icon-btn-float {
       position: absolute;
-      width: 35px;
-      height: 35px;
-      border-radius: 50%;
+      width: 30px;
+      height: 30px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--pill-custom);
-      color: var(--text-custom);
+      background: var(--accent-1);
+      color: var(--bg-dark);
       cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.1);
-      transition: transform .12s, background-color 0.3s ease;
+      border: 3px solid var(--text-primary);
+      box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+      transition: all 0.1s;
       z-index: 10;
+      font-size: 16px;
     }
-    body.light-mode .icon-btn-float { border-color: rgba(0,0,0,0.1); }
-    .icon-btn-float:hover { transform: translateY(-3px); filter: brightness(1.2); }
-    
-    .edit-btn { right: 15px; top: 15px; }
-    .res-btn { right: 55px; top: 15px; }
 
-    /* Pills (Badges interativos) */
+    .icon-btn-float:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 rgba(0,0,0,0.4);
+    }
+
+    .icon-btn-float:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+    }
+
+    .edit-btn { 
+      right: 12px; 
+      top: 12px; 
+      background: var(--accent-3);
+    }
+
+    .res-btn { 
+      right: 56px; 
+      top: 12px; 
+      background: var(--accent-2);
+    }
+
+    /* Pills Pixel */
     .action-pill {
-      background-color: var(--pill-custom);
-      color: var(--text-custom);
-      border: 1px solid rgba(255,255,255,0.1);
+      background-color: var(--bg-darker);
+      color: var(--text-primary);
+      border: 3px solid var(--text-primary);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.1s;
       user-select: none;
+      font-size: 12px;
+      padding: 8px !important;
+      text-align: center;
+      box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
     }
-    body.light-mode .action-pill { border-color: rgba(0,0,0,0.1); }
+
     .action-pill:hover {
-      transform: translateY(-2px);
-      background: var(--accent-gradient);
-      color: white;
-      border-color: transparent;
+      transform: translate(-2px, -2px);
+      background: var(--accent-1);
+      color: var(--bg-dark);
+      box-shadow: 6px 6px 0 rgba(0,0,0,0.3);
     }
-    .action-pill:active { transform: scale(0.98); }
 
-    /* Customização de Barras de Progresso */
-    .progress { background-color: rgba(120,120,120,0.1); border-radius: 20px; }
-    .bg-hp { background: linear-gradient(90deg, #ef4444, #f87171); }
-    .bg-armor { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-    .bg-mana { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .action-pill:active {
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+    }
 
-    /* Custom Modals (Mantendo a lógica de display:flex/none do original, mas com estilo Bootstrap) */
+    /* Barras de Progresso Pixel */
+    .progress {
+      background-color: var(--bg-darker);
+      border: 3px solid var(--text-primary);
+      height: 20px !important;
+      border-radius: 0 !important;
+      box-shadow: inset 2px 2px 0 rgba(0,0,0,0.3);
+      overflow: visible;
+    }
+
+    .progress-bar {
+      border-radius: 0 !important;
+      box-shadow: inset -2px -2px 0 rgba(255,255,255,0.2);
+      position: relative;
+    }
+
+    .progress-bar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 4px,
+        rgba(0,0,0,0.1) 4px,
+        rgba(0,0,0,0.1) 8px
+      );
+    }
+
+    .bg-hp { background: var(--hp-color) !important; }
+    .bg-armor { background: var(--armor-color) !important; }
+    .bg-mana { background: var(--mana-color) !important; }
+
+    /* Modals Pixel */
     .custom-modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(4px);
+      background: rgba(15, 23, 42, 0.85);
       z-index: 1050;
       display: flex;
       align-items: center;
@@ -173,59 +399,220 @@
       pointer-events: none;
       transition: opacity 0.2s;
     }
+
     .custom-modal-overlay.show {
       opacity: 1;
       pointer-events: auto;
     }
-    .custom-modal-panel {
-      background: var(--bg-custom);
-      color: var(--text-custom);
-      width: 100%;
-      max-width: 450px;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-      transform: translateY(20px);
-      transition: transform 0.22s;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    body.light-mode .custom-modal-panel { border-color: rgba(0,0,0,0.1); }
-    .custom-modal-overlay.show .custom-modal-panel { transform: translateY(0); }
 
-    /* Form Controls Customizados para o Tema */
+    .custom-modal-panel {
+      background: var(--card-bg);
+      color: var(--text-primary);
+      width: 100%;
+      max-width: 500px;
+      border: 4px solid var(--text-primary);
+      box-shadow: 12px 12px 0 rgba(0,0,0,0.5);
+      transform: scale(0.9);
+      transition: transform 0.2s;
+    }
+
+    .custom-modal-overlay.show .custom-modal-panel {
+      transform: scale(1);
+    }
+
+    /* Form Controls Pixel */
     .form-control-custom, .form-select-custom {
-      background-color: var(--pill-custom);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text-custom);
+      background-color: var(--bg-darker);
+      border: 3px solid var(--text-primary) !important;
+      color: var(--text-primary);
+      border-radius: 0 !important;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 16px;
+      padding: 8px;
+      box-shadow: inset 2px 2px 0 rgba(0,0,0,0.2);
     }
-    body.light-mode .form-control-custom { border-color: rgba(0,0,0,0.1); }
+
     .form-control-custom:focus {
-      background-color: var(--pill-custom);
-      color: var(--text-custom);
-      box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25);
-      border-color: #38bdf8;
+      background-color: var(--bg-darker);
+      color: var(--text-primary);
+      box-shadow: inset 2px 2px 0 rgba(0,0,0,0.2), 0 0 0 4px var(--accent-1) !important;
+      border-color: var(--text-primary) !important;
     }
-    .text-muted{
+
+    /* Botões Pixel */
+    .btn {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 13px;
+      border-radius: 0 !important;
+      border: 3px solid var(--text-primary) !important;
+      padding: 8px 16px;
+      box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+      transition: all 0.1s;
+    }
+
+    .btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 rgba(0,0,0,0.4);
+    }
+
+    .btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+    }
+
+    .btn-primary {
+      background-color: var(--accent-1) !important;
+      color: var(--bg-dark) !important;
+    }
+
+    .btn-danger {
+      background-color: var(--hp-color) !important;
       color: white !important;
     }
 
-    /* List Group Customizado */
-    .list-group-item-custom {
-      background-color: var(--pill-custom);
-      color: var(--text-custom);
-      border-color: rgba(255,255,255,0.1);
-      cursor: pointer;
-    }
-    body.light-mode .list-group-item-custom { border-color: rgba(0,0,0,0.1); }
-    .list-group-item-custom:hover {
-      background-color: rgba(120,120,120,0.2);
+    .btn-outline-secondary {
+      background-color: var(--bg-darker);
+      color: var(--text-primary);
     }
 
-    /* Toast Container */
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: 4px 4px 0 rgba(0,0,0,0.3) !important;
+    }
+
+    /* Card Title */
+    .card-title {
+      font-size: 17px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+    }
+
+    /* Text Sizes */
+    .small, .text-muted {
+      color: rgb(189, 189, 189) !important;
+      font-size: 11px !important;
+    }
+
+    h3, .h4 {
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    h5 {
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    /* List Group Pixel */
+    .list-group-item-custom {
+      background-color: var(--bg-darker);
+      color: var(--text-primary);
+      border: 3px solid var(--text-primary) !important;
+      cursor: pointer;
+      font-size: 16px;
+      margin-bottom: 8px;
+      box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+      transition: all 0.1s;
+      border-radius: 0 !important;
+    }
+
+    .list-group-item-custom:hover {
+      transform: translate(-2px, -2px);
+      background-color: var(--accent-1);
+      color: var(--bg-dark);
+      box-shadow: 6px 6px 0 rgba(0,0,0,0.3);
+    }
+
+    /* Badge Pixel */
+    .badge {
+      border: 2px solid var(--text-primary);
+      border-radius: 0 !important;
+      font-size: 13px;
+      padding: 4px 8px;
+    }
+
+    /* Switch Pixel */
+    .form-check-input {
+      width: 48px;
+      height: 24px;
+      border: 3px solid var(--text-primary) !important;
+      border-radius: 0 !important;
+      background-color: var(--bg-darker);
+      cursor: pointer;
+      box-shadow: inset 2px 2px 0 rgba(0,0,0,0.2);
+    }
+
+    .form-check-input:checked {
+      background-color: var(--accent-1) !important;
+    }
+
+    /* Toast Pixel */
     #toast-container {
       position: fixed;
       top: 20px;
       right: 20px;
       z-index: 2000;
+    }
+
+    .toast {
+      border: 4px solid var(--text-primary) !important;
+      border-radius: 0 !important;
+      box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
+      font-size: 10px;
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    /* Alert Pixel */
+    .alert {
+      border: 3px solid var(--text-primary) !important;
+      border-radius: 0 !important;
+      font-size: 10px;
+    }
+
+    /* Drag Handle */
+    .drag-handle {
+      cursor: grab;
+      padding-right: 90px !important;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    /* Label Pixel */
+    .form-label {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Container Ajuste */
+    .container {
+      max-width: 1200px;
+    }
+
+    /* Card Body Padding */
+    .card-body {
+      padding: 16px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .card-title {
+        font-size: 10px;
+      }
+      
+      .btn {
+        font-size: 8px;
+        padding: 6px 12px;
+      }
+      
+      .action-pill {
+        font-size: 8px;
+      }
     }
   </style>
 </head>
@@ -238,12 +625,12 @@
     <header class="mb-4">
       <div class="row g-3 align-items-center">
         <div class="col-12 col-md">
-          <input id="search" type="search" class="form-control form-control-custom form-control-lg" placeholder="Buscar personagem..." />
+          <input id="search" type="search" class="form-control form-control-custom form-control-lg" placeholder="BUSCAR..." />
         </div>
-        <div class="col-12 col-md-auto d-flex gap-2 align-items-center justify-content-end">
-          <button id="undoBtn" class="btn btn-outline-secondary">Desfazer</button>
-          <button id="redoBtn" class="btn btn-outline-secondary">Refazer</button>
-          <button id="createBtn" class="btn btn-primary bg-gradient border-0 fw-bold">Criar</button>
+        <div class="col-12 col-md-auto d-flex gap-2 align-items-center justify-content-end flex-wrap">
+          <button id="undoBtn" class="btn btn-outline-secondary">DESFAZER</button>
+          <button id="redoBtn" class="btn btn-outline-secondary">REFAZER</button>
+          <button id="createBtn" class="btn btn-primary fw-bold">CRIAR</button>
           
           <div class="form-check form-switch ms-2">
             <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
@@ -261,46 +648,46 @@
   <!-- Modal Editar/Criar -->
   <div id="modal" class="custom-modal-overlay">
     <div class="custom-modal-panel p-4">
-      <h3 id="modalTitle" class="mb-3 h4">Editar personagem</h3>
+      <h3 id="modalTitle" class="mb-3 h4">EDITAR</h3>
       
       <div class="mb-3">
-        <label class="form-label text-muted small">Nome</label>
+        <label class="form-label text-muted small">NOME</label>
         <input id="mName" class="form-control form-control-custom" />
       </div>
 
       <div class="row g-2 mb-3">
         <div class="col-4">
-          <label class="form-label text-muted small">Vida máxima</label>
+          <label class="form-label text-muted small">VIDA MAX</label>
           <input id="mMaxHp" type="number" class="form-control form-control-custom" />
         </div>
         <div class="col-4">
-            <label class="form-label text-muted small">Defesa</label>
-            <input id="mDefense" type="number" class="form-control form-control-custom" />
+          <label class="form-label text-muted small">DEFESA</label>
+          <input id="mDefense" type="number" class="form-control form-control-custom" />
         </div>
         <div class="col-4">
-          <label class="form-label text-muted small">Regen %</label>
+          <label class="form-label text-muted small">REGEN %</label>
           <input id="mRegenPercent" type="number" min="0" max="100" class="form-control form-control-custom" />
         </div>
       </div>
 
       <div class="row g-2 mb-3">
         <div class="col-6">
-          <label class="form-label text-muted small">Armadura máx</label>
+          <label class="form-label text-muted small">ARMOR MAX</label>
           <input id="mMaxArmor" type="number" class="form-control form-control-custom" />
         </div>
         <div class="col-6">
-          <label class="form-label text-muted small">Mana máxima</label>
+          <label class="form-label text-muted small">MANA MAX</label>
           <input id="mMaxMana" type="number" class="form-control form-control-custom" />
         </div>
       </div>
       
-      <h5 class="mt-4 mb-3 d-flex align-items-center gap-2 text-info"><span>💊</span> Resistências Base</h5>
+      <h5 class="mt-4 mb-3 d-flex align-items-center gap-2 text-info"><span>💊</span> RESIST</h5>
       <div id="mResistances" class="row g-2"></div>
 
-      <div class="d-flex gap-2 mt-4 justify-content-end">
-        <button id="deleteBtn" class="btn btn-danger me-auto" style="display:none">Excluir</button>
-        <button id="cancelModal" class="btn btn-outline-secondary">Cancelar</button>
-        <button id="saveModal" class="btn btn-primary">Salvar</button>
+      <div class="d-flex gap-2 mt-4 justify-content-end flex-wrap">
+        <button id="deleteBtn" class="btn btn-danger me-auto" style="display:none">DEL</button>
+        <button id="cancelModal" class="btn btn-outline-secondary">CANCELAR</button>
+        <button id="saveModal" class="btn btn-primary">SAVE</button>
       </div>
     </div>
   </div>
@@ -308,11 +695,11 @@
   <!-- Modal Ações -->
   <div id="actionModal" class="custom-modal-overlay">
     <div class="custom-modal-panel p-4">
-      <h3 id="actionTitle" class="mb-3 h4">Ação</h3>
+      <h3 id="actionTitle" class="mb-3 h4">ACAO</h3>
       <div id="actionBody"></div>
-      <div class="d-flex gap-2 mt-4 justify-content-end">
-        <button id="cancelAction" class="btn btn-outline-secondary">Cancelar</button>
-        <button id="confirmAction" class="btn btn-primary">Confirmar</button>
+      <div class="d-flex gap-2 mt-4 justify-content-end flex-wrap">
+        <button id="cancelAction" class="btn btn-outline-secondary">CANCELAR</button>
+        <button id="confirmAction" class="btn btn-primary">OK</button>
       </div>
     </div>
   </div>
@@ -320,30 +707,30 @@
   <!-- Modal Lista Resistências -->
   <div id="resistanceModal" class="custom-modal-overlay">
     <div class="custom-modal-panel p-4">
-      <h3 id="resistanceModalTitle" class="mb-3 h4">Resistências</h3>
+      <h3 id="resistanceModalTitle" class="mb-3 h4">RESIST</h3>
       <div id="resistanceModalBody" class="list-group"></div>
       <div class="d-flex justify-content-end mt-3">
-        <button id="closeResistanceModal" class="btn btn-outline-secondary">Fechar</button>
+        <button id="closeResistanceModal" class="btn btn-outline-secondary">FECHAR</button>
       </div>
     </div>
   </div>
   
   <!-- Modal Ação Resistência -->
   <div id="resistanceActionModal" class="custom-modal-overlay">
-      <div class="custom-modal-panel p-4">
-          <h3 id="resistanceActionTitle" class="mb-3 h4">Gerenciar Acúmulo</h3>
-          <label class="form-label text-muted small">Valor</label>
-          <input id="resAmount" type="number" value="0" class="form-control form-control-custom mb-3" />
-          
-          <div class="d-flex gap-2 mb-2">
-              <button id="resSet" class="btn btn-outline-secondary flex-fill">Setar</button>
-              <button id="resAdd" class="btn btn-primary flex-fill">Adicionar</button>
-              <button id="resRemove" class="btn btn-danger flex-fill">Remover</button>
-          </div>
-           <div class="mt-2">
-              <button id="cancelResAction" class="btn btn-outline-secondary w-100">Cancelar</button>
-          </div>
+    <div class="custom-modal-panel p-4">
+      <h3 id="resistanceActionTitle" class="mb-3 h4">GERENCIAR</h3>
+      <label class="form-label text-muted small">VALOR</label>
+      <input id="resAmount" type="number" value="0" class="form-control form-control-custom mb-3" />
+      
+      <div class="d-flex gap-2 mb-2 flex-wrap">
+        <button id="resSet" class="btn btn-outline-secondary flex-fill">SETAR</button>
+        <button id="resAdd" class="btn btn-primary flex-fill">ADICIONAR</button>
+        <button id="resRemove" class="btn btn-danger flex-fill">SUBTRAIR</button>
       </div>
+      <div class="mt-2">
+        <button id="cancelResAction" class="btn btn-outline-secondary w-100">CANCELAR</button>
+      </div>
+    </div>
   </div>
 
   <footer class="text-center text-muted small py-4"></footer>
@@ -351,8 +738,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // --- LÓGICA ORIGINAL MANTIDA (Apenas alterado o HTML gerado nas funções render) ---
-
     const STORAGE_KEY = 'rpg_chars_v1'
     const defaultChars = [
       {id:1,name:'Shizu',hp:143,maxHp:143,armor:117,maxArmor:117,mana:200,maxMana:200,regenPercent:20, defense: 0},
@@ -432,10 +817,9 @@
       const q = (searchEl.value||'').trim().toLowerCase()
       cardsEl.innerHTML = ''
       const filtered = chars.filter(c => (c.name||'').toLowerCase().includes(q))
-      if(filtered.length===0){ cardsEl.innerHTML = '<div class="col-12"><div class="alert alert-secondary">Nenhum personagem encontrado.</div></div>'; return }
+      if(filtered.length===0){ cardsEl.innerHTML = '<div class="col-12"><div class="alert alert-secondary">NENHUM CHAR ENCONTRADO</div></div>'; return }
 
       filtered.forEach((c,index)=>{
-        // Criação da estrutura de Coluna e Card do Bootstrap
         const col = document.createElement('div')
         col.className = 'col-12 col-md-6 col-lg-4'
         
@@ -449,50 +833,50 @@
              <div class="icon-btn-float res-btn" data-id="${c.id}" title="Resistências">💊</div>
              <div class="icon-btn-float edit-btn edit" data-id="${c.id}" title="Editar">✏️</div>
 
-            <h5 class="card-title drag-handle mb-3 fw-bold" style="padding-right: 80px;">${escapeHtml(c.name)}</h5>
+            <h5 class="card-title drag-handle mb-3 fw-bold">${escapeHtml(c.name)}</h5>
             
             <div class="mb-2">
               <div class="d-flex justify-content-between small text-muted mb-1">
-                <span>Vida ❤️</span>
-                <span>${c.hp} / ${c.maxHp}</span>
+                <span>VIDA ❤️</span>
+                <span>${c.hp}/${c.maxHp}</span>
               </div>
-              <div class="progress" style="height: 10px;">
+              <div class="progress">
                 <div class="progress-bar bg-hp" role="progressbar" style="width: ${pct(c.hp,c.maxHp)}%"></div>
               </div>
             </div>
 
             <div class="mb-2">
               <div class="d-flex justify-content-between small text-muted mb-1">
-                <span>Armadura 🛡️</span>
-                <span>${c.armor} / ${c.maxArmor}</span>
+                <span>ARMADURA 🛡️</span>
+                <span>${c.armor}/${c.maxArmor}</span>
               </div>
-              <div class="progress" style="height: 10px;">
+              <div class="progress">
                 <div class="progress-bar bg-armor" role="progressbar" style="width: ${pct(c.armor,c.maxArmor)}%"></div>
               </div>
             </div>
 
             <div class="mb-2">
               <div class="d-flex justify-content-between small text-muted mb-1">
-                <span>Mana ✨</span>
-                <span>${c.mana} / ${c.maxMana}</span>
+                <span>MANA ✨</span>
+                <span>${c.mana}/${c.maxMana}</span>
               </div>
-              <div class="progress" style="height: 10px;">
+              <div class="progress">
                 <div class="progress-bar bg-mana" role="progressbar" style="width: ${pct(c.mana,c.maxMana)}%"></div>
               </div>
             </div>
 
             <div class="d-flex justify-content-between small text-muted mb-3">
-                 <span>Regen: ${Number(c.regenPercent||0)}%</span>
-                 <span>Defesa: ${c.defense || 0}</span>
+                 <span>REGEN:${Number(c.regenPercent||0)}%</span>
+                 <span>DEFESA:${c.defense || 0}</span>
             </div>
 
             <div class="row g-2">
-              <div class="col-6"><div class="action-pill p-2 text-center rounded small" data-act="dano" data-id="${c.id}">Dano 🔥</div></div>
-              <div class="col-6"><div class="action-pill p-2 text-center rounded small" data-act="vida" data-id="${c.id}">Vida ❤️</div></div>
-              <div class="col-6"><div class="action-pill p-2 text-center rounded small" data-act="armadura" data-id="${c.id}">Defesa 🛡️</div></div>
-              <div class="col-6"><div class="action-pill p-2 text-center rounded small" data-act="mana" data-id="${c.id}">Mana ✨</div></div>
-              <div class="col-6"><div class="action-pill p-2 text-center rounded small" data-act="regen" data-id="${c.id}">Regen ⚡️</div></div>
-              <div class="col-6"><div class="action-pill p-2 text-center rounded small" data-act="reset" data-id="${c.id}">Reset ♻️</div></div>
+              <div class="col-6"><div class="action-pill" data-act="dano" data-id="${c.id}">DANO 🔥</div></div>
+              <div class="col-6"><div class="action-pill" data-act="vida" data-id="${c.id}">VIDA ❤️</div></div>
+              <div class="col-6"><div class="action-pill" data-act="armadura" data-id="${c.id}">ARMADURA 🛡️</div></div>
+              <div class="col-6"><div class="action-pill" data-act="mana" data-id="${c.id}">MANA ✨</div></div>
+              <div class="col-6"><div class="action-pill" data-act="regen" data-id="${c.id}">REGEN ✨</div></div>
+              <div class="col-6"><div class="action-pill" data-act="reset" data-id="${c.id}">RESETAR ♻️</div></div>
             </div>
           </div>
         `
@@ -500,9 +884,7 @@
         col.appendChild(cardDiv)
         cardsEl.appendChild(col)
         
-        // Drag logic attached to handle inside the card
         const handle = cardDiv.querySelector('.drag-handle')
-        handle.style.cursor = 'grab'
         handle.addEventListener('pointerdown', onPointerDown)
       })
 
@@ -530,7 +912,6 @@
     function onPointerDown(e){
       if(e.button !== 0) return
       const handle = e.currentTarget
-      // Busca o .card dentro do col
       const card = handle.closest('.card') 
       const id = Number(card.dataset.id)
       card.setPointerCapture(e.pointerId)
@@ -555,7 +936,6 @@
       ghostEl.style.left = e.clientX + 'px'
       ghostEl.style.top = e.clientY + 'px'
       
-      // Esconder ghost para detectar elemento abaixo
       ghostEl.style.display = 'none';
       const el = document.elementFromPoint(e.clientX, e.clientY)
       ghostEl.style.display = '';
@@ -628,11 +1008,11 @@
 
       if(act === 'dano'){
         actionBody.insertAdjacentHTML('beforeend', `
-          <label class="form-label">Quantidade</label>
+          <label class="form-label">QTD</label>
           <input id="aAmount" type="number" value="0" class="form-control form-control-custom mb-3" />
           <div class="form-check form-switch">
              <input class="form-check-input" type="checkbox" id="aTrue">
-             <label class="form-check-label" for="aTrue">Dano real (ignora armadura)</label>
+             <label class="form-check-label small" for="aTrue">DANO REAL</label>
           </div>
         `)
         confirmAction.onclick = ()=>{
@@ -642,21 +1022,21 @@
           closeAction()
         }
       } else if(act === 'reset'){
-        actionBody.insertAdjacentHTML('beforeend', `<div class="alert alert-warning">Redefinir ${escapeHtml(c.name)} para valores iniciais?</div>`)
+        actionBody.insertAdjacentHTML('beforeend', `<div class="alert alert-warning">RESETAR ${escapeHtml(c.name)}?</div>`)
         confirmAction.onclick = ()=>{ applyAction(id,'reset'); closeAction() }
       } else {
         actionBody.insertAdjacentHTML('beforeend', `
-          <label class="form-label">Operação</label>
+          <label class="form-label">OP</label>
           <select id="aOp" class="form-select form-select-custom mb-2">
-            <option value="set">Setar</option>
-            <option value="inc" selected>Aumentar</option>
-            <option value="dec">Diminuir</option>
+            <option value="set">SETAR</option>
+            <option value="inc" selected>ADICIONAR</option>
+            <option value="dec">SUBTRAIR</option>
           </select>
-          <label class="form-label">Quantidade</label>
+          <label class="form-label">QTD</label>
           <input id="aAmount" type="number" value="0" class="form-control form-control-custom mb-3" />
           <div class="form-check form-switch">
              <input class="form-check-input" type="checkbox" id="aOverflow">
-             <label class="form-check-label" for="aOverflow">Permitir ultrapassar limite</label>
+             <label class="form-check-label small" for="aOverflow">OVERFLOW</label>
           </div>
         `)
         confirmAction.onclick = ()=>{
@@ -671,7 +1051,7 @@
     }
 
     function closeAction(){ actionModal.classList.remove('show'); confirmAction.onclick = null; cancelAction.onclick = null }
-    function actLabel(a){ return a==='dano' ? 'Aplicar Dano' : a==='vida' ? 'Editar Vida' : a==='armadura' ? 'Editar Armadura' : a==='mana' ? 'Editar Mana' : a==='regen' ? 'Regenerar Mana' : 'Ação' }
+    function actLabel(a){ return a==='dano' ? 'DMG' : a==='vida' ? 'HP' : a==='armadura' ? 'ARM' : a==='mana' ? 'MP' : a==='regen' ? 'RGN' : 'ACAO' }
 
     function applyAction(id, act, x, opts){
       const c = chars.find(i=>i.id===id); if(!c) return
@@ -696,7 +1076,6 @@
             c.maxArmor = c.initial.maxArmor;
             c.maxMana = c.initial.maxMana;
             c.regenPercent = c.initial.regenPercent;
-            // defense doesn't reset as it's static, but good to keep consistency if needed
         }
       } else if(act === 'regen'){
         const amount = Number(x) || 0
@@ -719,14 +1098,14 @@
     function openResistanceModal(id) {
         const c = chars.find(x => x.id === id);
         if (!c) return;
-        resistanceModalTitle.textContent = `Resistências de ${c.name}`;
+        resistanceModalTitle.textContent = `RESIST ${c.name}`;
         resistanceModalBody.innerHTML = '';
         resistanceTypes.forEach(type => {
             const res = c.resistances[type];
             const item = document.createElement('a');
             item.className = 'list-group-item list-group-item-custom d-flex justify-content-between align-items-center';
             item.dataset.type = type;
-            item.innerHTML = `<span>${type}</span><span class="badge bg-secondary rounded-pill">${res.current} / ${res.max}</span>`;
+            item.innerHTML = `<span>${type}</span><span class="badge bg-secondary">${res.current}/${res.max}</span>`;
             item.onclick = () => openResistanceActionModal(id, type);
             resistanceModalBody.appendChild(item);
         });
@@ -736,7 +1115,7 @@
 
     function openResistanceActionModal(id, type) {
         activeResistanceContext = { id, type };
-        resistanceActionTitle.textContent = `Gerenciar ${type}`;
+        resistanceActionTitle.textContent = `${type}`;
         resistanceActionModal.classList.add('show');
     }
     cancelResAction.onclick = () => resistanceActionModal.classList.remove('show');
@@ -759,7 +1138,7 @@
         }
         
         if (oldValue < res.max && res.current >= res.max) {
-            showToast(`${c.name} atingiu o máximo de resistência a ${type}!`);
+            showToast(`${c.name} MAX ${type}!`);
         }
 
         commitChange();
@@ -775,7 +1154,6 @@
     function showToast(message) {
         const container = document.getElementById('toast-container');
         const toastEl = document.createElement('div');
-        // Estilo Bootstrap para Toast
         toastEl.className = 'toast align-items-center text-white bg-primary border-0 show';
         toastEl.setAttribute('role', 'alert');
         toastEl.setAttribute('aria-live', 'assertive');
@@ -792,7 +1170,6 @@
         
         container.appendChild(toastEl);
         
-        // Auto remove visual simples, sem depender do BS JS init
         setTimeout(() => {
            toastEl.classList.remove('show');
            setTimeout(() => toastEl.remove(), 300);
@@ -818,7 +1195,7 @@
 
     createBtn.onclick = ()=>{
       editingId = null
-      modalTitle.textContent = 'Criar novo personagem'
+      modalTitle.textContent = 'NOVO CHAR'
       mName.value = ''
       mMaxHp.value = 100
       mMaxArmor.value = 50
@@ -834,7 +1211,7 @@
       editingId = id
       const c = chars.find(x=>x.id===id)
       if(!c) return
-      modalTitle.textContent = 'Editar ' + c.name
+      modalTitle.textContent = 'EDIT ' + c.name
       mName.value = c.name
       mMaxHp.value = c.maxHp
       mMaxArmor.value = c.maxArmor
@@ -996,6 +1373,4 @@
     setupTheme();
     commitChange(); 
     render();
-  </script>
-</body>
-</html>
+</script>   
