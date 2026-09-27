@@ -1071,7 +1071,7 @@ body.light-mode::after {
         if(danoReal){ c.hp = Math.max(0, c.hp - x) }
         else {
           const baseMaxArmor = (c.initial && typeof c.initial.maxArmor === 'number') ? c.initial.maxArmor : c.maxArmor;
-          const exceedsArmor = x > c.armor;
+          const brokeArmor = c.armor > 0 && x > c.armor;
           const exceedsMaxArmor = x > c.maxArmor;
 
           const takeArmor = Math.min(c.armor, x)
@@ -1079,7 +1079,7 @@ body.light-mode::after {
           const leftover = x - takeArmor
           if(leftover>0) c.hp = Math.max(0, c.hp - leftover)
 
-          if (exceedsArmor && baseMaxArmor > 0 && c.maxArmor > 0) {
+          if (brokeArmor && baseMaxArmor > 0 && c.maxArmor > 0) {
             const pct = exceedsMaxArmor ? 0.20 : 0.10;
             const loss = Math.max(1, Math.round(baseMaxArmor * pct));
             c.maxArmor = Math.max(0, c.maxArmor - loss);
