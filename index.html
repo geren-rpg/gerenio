@@ -736,7 +736,7 @@ body.light-mode::after {
     </div>
   </div>
 
-  <footer class="text-center text-muted small py-4">v1.2 (Armadura só reduz ao quebrar)</footer>
+  <footer class="text-center text-muted small py-4"></footer>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -767,6 +767,9 @@ body.light-mode::after {
                 resistances: c.resistances || createDefaultResistances()
             };
         } else {
+            if (typeof c.initial.maxArmor === 'number' && c.maxArmor < c.initial.maxArmor) {
+                c.maxArmor = c.initial.maxArmor;
+            }
             if (typeof c.initial.maxArmor !== 'number') c.initial.maxArmor = c.maxArmor;
             if (typeof c.initial.armor !== 'number') c.initial.armor = c.armor;
             if (typeof c.initial.defense !== 'number') c.initial.defense = c.defense || 0;
@@ -1070,28 +1073,15 @@ body.light-mode::after {
       let tookDamage = false;
       if(act === 'dano'){
         const danoReal = !!opts
-        const oldHp = c.hp; const oldArmor = c.armor; const oldMaxArmor = c.maxArmor;
+        const oldHp = c.hp; const oldArmor = c.armor;
         if(danoReal){ c.hp = Math.max(0, c.hp - x) }
         else {
-          const baseMaxArmor = (c.initial && typeof c.initial.maxArmor === 'number') ? c.initial.maxArmor : Number(c.maxArmor) || 0;
-          const currentArmor = Number(c.armor) || 0;
-          const currentMaxArmor = Number(c.maxArmor) || 0;
-          const brokeArmor = currentArmor > 0 && x > currentArmor;
-          const exceedsMaxArmor = x > currentMaxArmor;
-
-          const takeArmor = Math.min(currentArmor, x);
-          c.armor = Math.max(0, currentArmor - x);
-          const leftover = x - takeArmor;
-          if(leftover > 0) c.hp = Math.max(0, Number(c.hp || 0) - leftover);
-
-          if (brokeArmor && baseMaxArmor > 0 && currentMaxArmor > 0) {
-            const pct = exceedsMaxArmor ? 0.20 : 0.10;
-            const loss = Math.max(1, Math.round(baseMaxArmor * pct));
-            c.maxArmor = Math.max(0, currentMaxArmor - loss);
-            c.armor = Math.min(c.armor, c.maxArmor);
-          }
+          const takeArmor = Math.min(c.armor, x)
+          c.armor = Math.max(0, c.armor - x)
+          const leftover = x - takeArmor
+          if(leftover>0) c.hp = Math.max(0, c.hp - leftover)
         }
-        if (c.hp < oldHp || c.armor < oldArmor || c.maxArmor < oldMaxArmor) { tookDamage = true; }
+        if (c.hp < oldHp || c.armor < oldArmor) { tookDamage = true; }
       } else if(act === 'reset'){
         if (c.initial) {
             c.hp = c.initial.hp;
@@ -1243,7 +1233,7 @@ body.light-mode::after {
       modalTitle.textContent = 'EDIT ' + c.name
       mName.value = c.name
       mMaxHp.value = c.maxHp
-      mMaxArmor.value = (c.initial && typeof c.initial.maxArmor === 'number') ? c.initial.maxArmor : c.maxArmor
+      mMaxArmor.value = c.maxArmor
       mMaxMana.value = c.maxMana
       mRegenPercent.value = c.regenPercent || 0
       mDefense.value = c.defense || 0
@@ -1303,28 +1293,20 @@ body.light-mode::after {
           c.resistances[type].current = Math.min(c.resistances[type].current || 0, c.resistances[type].max);
         });
 
-        const newMaxArmor = Number(mMaxArmor.value) || 0;
-        const oldInitialMaxArmor = (c.initial && typeof c.initial.maxArmor === 'number') ? c.initial.maxArmor : c.maxArmor;
-
         c.name = mName.value || c.name;
         c.maxHp = Number(mMaxHp.value) || c.maxHp;
+        c.maxArmor = Number(mMaxArmor.value) || c.maxArmor;
         c.maxMana = Number(mMaxMana.value) || c.maxMana;
         c.regenPercent = Number(mRegenPercent.value) || c.regenPercent || 0;
         c.defense = Number(mDefense.value) || 0;
-
-        if (newMaxArmor !== oldInitialMaxArmor) {
-          c.maxArmor = newMaxArmor;
-        } else {
-          c.maxArmor = Math.min(c.maxArmor, newMaxArmor);
-        }
 
         c.hp = Math.min(c.hp, c.maxHp);
         c.armor = Math.min(c.armor, c.maxArmor);
         c.mana = Math.min(c.mana, c.maxMana);
 
         c.initial = {
-            hp: c.maxHp, armor: newMaxArmor, mana: c.maxMana,
-            maxHp: c.maxHp, maxArmor: newMaxArmor, maxMana: c.maxMana,
+            hp: c.maxHp, armor: c.maxArmor, mana: c.maxMana,
+            maxHp: c.maxHp, maxArmor: c.maxArmor, maxMana: c.maxMana,
             regenPercent: c.regenPercent, defense: c.defense,
             resistances: JSON.parse(JSON.stringify(c.resistances))
         };
